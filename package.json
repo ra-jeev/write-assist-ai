@@ -4,6 +4,9 @@
   "description": "This extension assists you in writing your markdown files using AI",
   "version": "0.0.1",
   "publisher": "RajeevRSharma",
+  "repository": {
+    "url": "https://github.com/ra-jeev/write-assist-ai"
+  },
   "engines": {
     "vscode": "^1.78.0"
   },
