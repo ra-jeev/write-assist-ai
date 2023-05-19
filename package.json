@@ -1,8 +1,8 @@
 {
   "name": "write-assist-ai",
   "displayName": "Write Assist AI",
-  "description": "This extension assists you in writing your markdown files using AI",
-  "version": "0.0.3",
+  "description": "This extension assists you in writing your markdown files using the power of AI",
+  "version": "0.0.5",
   "publisher": "ra-jeev",
   "repository": {
     "url": "https://github.com/ra-jeev/write-assist-ai"
@@ -13,6 +13,15 @@
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "rewrite",
+    "rephrase",
+    "markdown",
+    "openai",
+    "assist",
+    "chatgpt"
+  ],
+  "icon": "assets/images/icon.png",
   "activationEvents": [
     "onLanguage:markdown"
   ],
