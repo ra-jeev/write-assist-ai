@@ -23,10 +23,16 @@ It exposes the following settings:
 
 ## Release Notes
 
+### 0.0.3
+
+Remove the browser field from webpack
+
+### 0.0.2
+
+Changing the environment to node
+
 ### 0.0.1
 
 Initial release of WriteAssistAI
-
----
 
 **Enjoy!**

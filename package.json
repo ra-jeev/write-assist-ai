@@ -2,7 +2,7 @@
   "name": "write-assist-ai",
   "displayName": "Write Assist AI",
   "description": "This extension assists you in writing your markdown files using AI",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "publisher": "ra-jeev",
   "repository": {
     "url": "https://github.com/ra-jeev/write-assist-ai"
@@ -19,14 +19,14 @@
   "main": "./dist/extension.js",
   "contributes": {
     "configuration": {
-      "title": "AI Write Assist",
+      "title": "Write Assist AI",
       "properties": {
-        "write-assist-ai.openAiApiKey": {
+        "writeAssistAi.openAiApiKey": {
           "type": "string",
           "default": "",
           "description": "Enter you OpenAI API Key here"
         },
-        "write-assist-ai.maxTokens": {
+        "writeAssistAi.maxTokens": {
           "type": "number",
           "default": 1200,
           "description": "Enter the maximum tokens to use for each OpenAI API call"
