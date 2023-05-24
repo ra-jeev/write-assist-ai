@@ -14,7 +14,7 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
     'informative',
   ];
 
-  public static readonly extensionId = 'write-assist-ai';
+  public static readonly extensionConfigKey = 'writeAssistAi';
 
   private openAiSvc: OpenAIApi | undefined;
   private allCommands: string[] = [];
@@ -28,7 +28,7 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
 
   getConfiguration<T>(key: string) {
     return vscode.workspace
-      .getConfiguration(WriteAssistAI.extensionId)
+      .getConfiguration(WriteAssistAI.extensionConfigKey)
       .get<T>(key);
   }
 
@@ -36,7 +36,9 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
     for (const writingStyle of WriteAssistAI.writingStyles) {
       const action = this.createAction(writingStyle);
       this.actions.push(action);
-      this.allCommands.push(`${WriteAssistAI.extensionId}.${writingStyle}`);
+      this.allCommands.push(
+        `${WriteAssistAI.extensionConfigKey}.${writingStyle}`
+      );
     }
   }
 
@@ -66,7 +68,7 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
     );
 
     action.command = {
-      command: `${WriteAssistAI.extensionId}.${writingStyle}`,
+      command: `${WriteAssistAI.extensionConfigKey}.${writingStyle}`,
       title: `Rephrase in ${writingStyle} tone`,
       tooltip: `This will change the text tone to ${writingStyle}.`,
     };
@@ -82,7 +84,7 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
     const apiKey = this.getConfiguration<string>('openAiApiKey');
     if (!apiKey) {
       const message =
-        'Missing OpenAI API Key. Please add your key in the settings to use this extension.';
+        'Missing OpenAI API Key. Please add your key in VSCode settings to use this extension.';
       if (severity === 'error') {
         vscode.window.showErrorMessage(message);
       } else {
@@ -107,7 +109,9 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
       return;
     }
 
-    const writingStyle = command.split(`${WriteAssistAI.extensionId}.`)[1];
+    const writingStyle = command.split(
+      `${WriteAssistAI.extensionConfigKey}.`
+    )[1];
     let currRange = this.currRange;
     let selectionStart: vscode.Position;
     let selectionEnd: vscode.Position;
