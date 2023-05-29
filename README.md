@@ -34,6 +34,10 @@ It exposes the following settings:
 
 ## Release Notes
 
+### 0.0.9
+
+Update the demo gif
+
 ### 0.0.8
 
 #### Added

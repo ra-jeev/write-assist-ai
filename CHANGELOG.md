@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.0.9] - 2023-05-29
+
+Update the demo gif
+
 ## [0.0.8] - 2023-05-29
 
 ### Added
