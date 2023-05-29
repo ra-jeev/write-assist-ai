@@ -2,7 +2,7 @@
   "name": "write-assist-ai",
   "displayName": "Write Assist AI",
   "description": "This extension assists you in rewriting texts in your markdown files using the power of AI",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "publisher": "ra-jeev",
   "repository": {
     "url": "https://github.com/ra-jeev/write-assist-ai"
@@ -23,7 +23,8 @@
   ],
   "icon": "assets/images/icon.png",
   "activationEvents": [
-    "onLanguage:markdown"
+    "onLanguage:markdown",
+    "onLanguage:plaintext"
   ],
   "main": "./dist/extension.js",
   "contributes": {

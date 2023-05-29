@@ -1,17 +1,62 @@
 import { OpenAIApi, Configuration } from 'openai';
 import * as vscode from 'vscode';
 
+type WritingAction = {
+  id: string;
+  title: string;
+  description: string;
+  prompt: string;
+};
+
 export class WriteAssistAI implements vscode.CodeActionProvider {
   public static readonly providedCodeActionKinds = [
     vscode.CodeActionKind.RefactorRewrite,
+    vscode.CodeActionKind.QuickFix,
   ];
 
-  public static readonly writingStyles = [
+  public static readonly toneOptions: string[] = [
     'professional',
-    'formal',
     'casual',
+    'formal',
     'friendly',
     'informative',
+    'authoritative',
+  ];
+
+  public static readonly quickFixActions = [
+    {
+      id: 'rephrase',
+      title: 'Rephrase the selected text',
+      description: 'Rephrases the selected text',
+      prompt:
+        'Rephrase the following text and make the sentences more clear and readable',
+    },
+    {
+      id: 'suggest-titles',
+      title: 'Suggest headlines for selection',
+      description: 'Suggests some appropriate titles for the selected text',
+      prompt: 'Suggest some short headlines for the following text',
+    },
+    {
+      id: 'summarize',
+      title: 'Summarize the selected text',
+      description: 'Write a summary for the selected text',
+      prompt: 'Write a short summary for the following text',
+    },
+    {
+      id: 'expand',
+      title: 'Expand the selected text',
+      description: 'Builds upon the selected text and makes it verbose',
+      prompt:
+        'Continue building on the following text, make it better and verbose',
+    },
+    {
+      id: 'shorten',
+      title: 'Shorten the selected text',
+      description: 'Based on the selected text tries to make it concise',
+      prompt:
+        'Based on the following text, try to make it readable and concise at the same time',
+    },
   ];
 
   public static readonly extensionConfigKey = 'writeAssistAi';
@@ -32,14 +77,39 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
       .get<T>(key);
   }
 
-  prepareCommandsAndActions() {
-    for (const writingStyle of WriteAssistAI.writingStyles) {
-      const action = this.createAction(writingStyle);
+  prepareActionKind(
+    writingActions: WritingAction[],
+    actionKind: vscode.CodeActionKind
+  ) {
+    for (const writingAction of writingActions) {
+      const action = this.createAction(writingAction, actionKind);
       this.actions.push(action);
-      this.allCommands.push(
-        `${WriteAssistAI.extensionConfigKey}.${writingStyle}`
-      );
+      if (action.command) {
+        this.allCommands.push(action.command.command);
+      }
     }
+  }
+
+  prepareCommandsAndActions() {
+    const toneChangeActions = [];
+    for (const tone of WriteAssistAI.toneOptions) {
+      toneChangeActions.push({
+        id: tone,
+        title: `Rewrite in ${tone} tone`,
+        description: `Changes the selected text's tone to ${tone}`,
+        prompt: `Make the following text better and rewrite it in a ${tone} tone`,
+      });
+    }
+
+    this.prepareActionKind(
+      toneChangeActions,
+      vscode.CodeActionKind.RefactorRewrite
+    );
+
+    this.prepareActionKind(
+      WriteAssistAI.quickFixActions,
+      vscode.CodeActionKind.QuickFix
+    );
   }
 
   provideCodeActions(
@@ -61,16 +131,16 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
     return this.allCommands;
   }
 
-  createAction(writingStyle: string): vscode.CodeAction {
-    const action = new vscode.CodeAction(
-      `in ${writingStyle} tone`,
-      vscode.CodeActionKind.RefactorRewrite
-    );
-
+  createAction(
+    writingAction: WritingAction,
+    actionKind: vscode.CodeActionKind
+  ): vscode.CodeAction {
+    const action = new vscode.CodeAction(writingAction.title, actionKind);
     action.command = {
-      command: `${WriteAssistAI.extensionConfigKey}.${writingStyle}`,
-      title: `Rephrase in ${writingStyle} tone`,
-      tooltip: `This will change the text tone to ${writingStyle}.`,
+      command: `${WriteAssistAI.extensionConfigKey}.${writingAction.id}`,
+      title: writingAction.title,
+      tooltip: writingAction.description,
+      arguments: [writingAction.prompt],
     };
 
     return action;
@@ -101,7 +171,7 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
     );
   }
 
-  async handleAction(command: string) {
+  async handleAction(prompt: string) {
     const editor = vscode.window.activeTextEditor;
     const openAiSvc = this.createOpenApiSvc('error');
 
@@ -109,16 +179,13 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
       return;
     }
 
-    const writingStyle = command.split(
-      `${WriteAssistAI.extensionConfigKey}.`
-    )[1];
     let currRange = this.currRange;
     let selectionStart: vscode.Position;
     let selectionEnd: vscode.Position;
 
     try {
       const maxTokens = this.getConfiguration<number>('maxTokens');
-      const fillerText = '\n\nRewriting, please wait...';
+      const fillerText = '\n\nThinking...';
       editor
         .edit((editBuilder) => {
           editBuilder.insert(currRange.end, fillerText);
@@ -138,18 +205,19 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
         });
 
       const text = editor.document.getText(currRange);
+      /* eslint-disable @typescript-eslint/naming-convention */
       const response = await openAiSvc.createCompletion({
         model: 'text-davinci-003',
-        prompt: `Rewrite the following text in a ${writingStyle} tone.\n\n${text}\n\n`,
+        prompt: `${prompt}:\n\n${text}\n\n`,
         temperature: 0.3,
         max_tokens: maxTokens,
         frequency_penalty: 0.0,
         presence_penalty: 0.0,
         n: 1,
       });
+      /* eslint-enable @typescript-eslint/naming-convention */
 
       let result = response.data.choices[0].text;
-
       editor
         .edit((editBuilder) => {
           if (result) {
@@ -177,7 +245,7 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
 
     editor.edit((editBuilder) => {
       editor.selection = new vscode.Selection(selectionStart, selectionEnd);
-      editBuilder.replace(editor.selection, 'Failed to rewrite...');
+      editBuilder.replace(editor.selection, 'Failed to process...');
     });
   }
 }

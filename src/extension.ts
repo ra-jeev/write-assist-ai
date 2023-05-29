@@ -8,7 +8,7 @@ import { WriteAssistAI } from './writeAssistAI';
 export function activate(context: vscode.ExtensionContext) {
   const writeAssist: WriteAssistAI = new WriteAssistAI();
   const aiActionProvider = vscode.languages.registerCodeActionsProvider(
-    'markdown',
+    ['markdown', 'plaintext'],
     writeAssist,
     {
       providedCodeActionKinds: WriteAssistAI.providedCodeActionKinds,
@@ -18,8 +18,8 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(aiActionProvider);
   for (const command of writeAssist.commands) {
     context.subscriptions.push(
-      vscode.commands.registerCommand(command, () =>
-        writeAssist.handleAction(command)
+      vscode.commands.registerCommand(command, (args) =>
+        writeAssist.handleAction(args)
       )
     );
   }

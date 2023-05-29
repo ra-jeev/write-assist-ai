@@ -1,12 +1,21 @@
 # Write Assist AI
 
-WriteAssistAI is a VSCode extension that leverages OpenAI APIs to provide users with AI-assisted writing capabilities. This extension enables users to rewrite existing text in various tones and writing styles in their markdown files.
+WriteAssistAI is a VSCode extension that leverages OpenAI APIs to provide users with AI-assisted writing capabilities for their markdown / plain text files. This extension enables users to rephrase, summarize, or expand existing texts. It can also suggest short headlines for the selected text.
 
 ## Features
 
-This markdown text editor offers a variety of writing styles to choose from. To access these styles, simply select the desired text in your markdown files, click on the bulb tooltip (to access Code Actions), and select the desired writing style.
+This AI text assistant offers a variety of writing styles to choose from. To access these styles, or other features, select the desired text in your markdown/text files, click on the Code Actions bulb tooltip, and then click on the desired action.
 
-![Extension Demo](/assets/images/WriteAssistAI.gif)
+![Extension Demo](/assets/images/WriteAssistAiDemo.gif)
+
+Below is the available feature list:
+
+* Rewrite text in various tones. Available tones: professional, casual, formal, friendly, informative, authoritative
+* Rephrase selected text
+* Suggest headlines for selected text
+* Summarize selected text
+* Expand selected text (make it verbose)
+* Shorten selected text (make it concise)
 
 ## Requirements
 
@@ -24,6 +33,19 @@ It exposes the following settings:
 --
 
 ## Release Notes
+
+### 0.0.8
+
+#### Added
+
+* Support for plain text files
+* One new rewrite tone, authoritative
+* More actions
+  * Rephrase text
+  * Suggest headlines
+  * Summarize selection
+  * Expand selection (Make text verbose)
+  * Shorten selection (Make text concise)
 
 ### 0.0.7
 
