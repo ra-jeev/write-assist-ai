@@ -5,7 +5,12 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 ## [Unreleased]
 
 * Config options to change the OpenAI models, and set the temperature of API calls
-* Support for Tex/LaTex files
+
+## [0.1.0] - 2024-03-06
+
+### Added
+
+* Support for TeX/LaTeX files.
 
 ## [0.0.10] - 2024-03-06
 

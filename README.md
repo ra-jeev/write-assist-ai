@@ -34,6 +34,12 @@ It exposes the following settings:
 
 ## Release Notes
 
+### 0.1.0
+
+#### Added
+
+* Support for TeX/LaTeX files.
+
 ### 0.0.10
 
 #### Fixed
@@ -65,34 +71,9 @@ Update the demo gif
   * Expand selection (Make text verbose)
   * Shorten selection (Make text concise)
 
-### 0.0.7
+## Changelog
 
-Changing the API Key type to String
+To check the complete changelog [click here](/CHANGELOG.md)
 
-### 0.0.6
-
-* Correct the extension configuration Id
-* Update README and add extension demo gif
-  
-### 0.0.5
-
-Update README
-
-### 0.0.4
-
-* Add the extension icon.
-* Update changelog
-
-### 0.0.3
-
-Remove the browser field from webpack
-
-### 0.0.2
-
-Changing the environment to node
-
-### 0.0.1
-
-Initial release of WriteAssistAI
-
-**Enjoy!**
+## LICENSE
+This extension is licensed under the [MIT License](/LICENSE)
