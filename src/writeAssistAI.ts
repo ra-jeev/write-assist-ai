@@ -1,4 +1,4 @@
-import { OpenAIApi, Configuration } from 'openai';
+import { OpenAI, APIError } from 'openai';
 import * as vscode from 'vscode';
 
 type WritingAction = {
@@ -61,7 +61,7 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
 
   public static readonly extensionConfigKey = 'writeAssistAi';
 
-  private openAiSvc: OpenAIApi | undefined;
+  private openAiSvc: OpenAI | undefined;
   private allCommands: string[] = [];
   private actions: vscode.CodeAction[] = [];
   private currRange: vscode.Range | undefined;
@@ -146,7 +146,7 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
     return action;
   }
 
-  createOpenApiSvc(severity: string = 'info'): OpenAIApi | undefined {
+  createOpenApiSvc(severity: string = 'info'): OpenAI | undefined {
     if (this.openAiSvc) {
       return this.openAiSvc;
     }
@@ -164,11 +164,9 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
       return;
     }
 
-    return new OpenAIApi(
-      new Configuration({
-        apiKey,
-      })
-    );
+    return new OpenAI({
+      apiKey,
+    });
   }
 
   async handleAction(prompt: string) {
@@ -180,34 +178,33 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
     }
 
     let currRange = this.currRange;
-    let selectionStart: vscode.Position;
-    let selectionEnd: vscode.Position;
+    let selectionStart = editor.selection.start;
+    let selectionEnd = editor.selection.end;
 
     try {
       const maxTokens = this.getConfiguration<number>('maxTokens');
       const fillerText = '\n\nThinking...';
-      editor
-        .edit((editBuilder) => {
-          editBuilder.insert(currRange.end, fillerText);
-        })
-        .then((success) => {
-          if (success) {
-            editor.selection = new vscode.Selection(
-              editor.selection.end.line,
-              0,
-              editor.selection.end.line,
-              editor.selection.end.character
-            );
 
-            selectionStart = editor.selection.start;
-            selectionEnd = editor.selection.end;
-          }
-        });
+      const fillerRes = await editor.edit((editBuilder) => {
+        editBuilder.insert(currRange.end, fillerText);
+      });
+
+      if (fillerRes) {
+        editor.selection = new vscode.Selection(
+          editor.selection.end.line,
+          0,
+          editor.selection.end.line,
+          editor.selection.end.character
+        );
+
+        selectionStart = editor.selection.start;
+        selectionEnd = editor.selection.end;
+      }
 
       const text = editor.document.getText(currRange);
       /* eslint-disable @typescript-eslint/naming-convention */
-      const response = await openAiSvc.createCompletion({
-        model: 'text-davinci-003',
+      const response = await openAiSvc.completions.create({
+        model: 'gpt-3.5-turbo-instruct',
         prompt: `${prompt}:\n\n${text}\n\n`,
         temperature: 0.3,
         max_tokens: maxTokens,
@@ -217,35 +214,36 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
       });
       /* eslint-enable @typescript-eslint/naming-convention */
 
-      let result = response.data.choices[0].text;
-      editor
-        .edit((editBuilder) => {
-          if (result) {
-            editBuilder.replace(
-              new vscode.Range(selectionStart, selectionEnd),
-              result.trim()
-            );
-          }
-        })
-        .then((success) => {
-          if (success) {
-            editor.selection = new vscode.Selection(
-              selectionStart.line,
-              selectionStart.character,
-              selectionEnd.line,
-              editor.document.lineAt(selectionEnd.line).text.length
-            );
-
-            return;
-          }
+      if (response.choices.length) {
+        const result = response.choices[0].text.trim();
+        const replaceRes = await editor.edit((editBuilder) => {
+          editBuilder.replace(
+            new vscode.Range(selectionStart, selectionEnd),
+            result
+          );
         });
-    } catch (error) {
-      console.error(error);
-    }
 
-    editor.edit((editBuilder) => {
-      editor.selection = new vscode.Selection(selectionStart, selectionEnd);
-      editBuilder.replace(editor.selection, 'Failed to process...');
-    });
+        if (replaceRes) {
+          editor.selection = new vscode.Selection(
+            selectionStart.line,
+            selectionStart.character,
+            selectionEnd.line,
+            editor.document.lineAt(selectionEnd.line).text.length
+          );
+        }
+      }
+    } catch (error) {
+      let errMessage = '';
+      if (error instanceof APIError) {
+        errMessage = `Error: ${error.code}: ${error.message}`;
+      } else {
+        errMessage = `Error: ${(error as any).message ?? 'Failed to process'}`;
+      }
+
+      editor.edit((editBuilder) => {
+        editor.selection = new vscode.Selection(selectionStart, selectionEnd);
+        editBuilder.replace(editor.selection, errMessage);
+      });
+    }
   }
 }
