@@ -2,9 +2,24 @@
 
 All notable changes to the "write-assist-ai" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
-
 ## [Unreleased]
+
+* Config options to change the OpenAI models, and set the temperature of API calls
+* Support for Tex/LaTex files
+
+## [0.0.10] - 2024-03-06
+
+### Fixed
+
+* The issue of failing API calls
+  
+### Changed
+
+* The base OpenAI model from `text-davinci-003` to `gpt-3.5-turbo-instruct`
+
+### Added
+
+* Better error messaging in case of API errors
 
 ## [0.0.9] - 2023-05-29
 

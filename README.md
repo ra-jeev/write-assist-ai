@@ -34,6 +34,20 @@ It exposes the following settings:
 
 ## Release Notes
 
+### 0.0.10
+
+#### Fixed
+
+* The issue of failing API calls
+  
+#### Changed
+
+* The base OpenAI model from `text-davinci-003` to `gpt-3.5-turbo-instruct`
+
+#### Added
+
+* Better error messaging in case of API errors
+
 ### 0.0.9
 
 Update the demo gif
