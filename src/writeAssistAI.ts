@@ -202,10 +202,11 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
       }
 
       const text = editor.document.getText(currRange);
+      const subPrompt = `If the text contains any special syntax then strictly follow the same syntax, e.g. for markdown return markdown, for latex return latex etc. Do not return markdown for latex, and vice versa. Here is the text`;
       /* eslint-disable @typescript-eslint/naming-convention */
       const response = await openAiSvc.completions.create({
         model: 'gpt-3.5-turbo-instruct',
-        prompt: `${prompt}:\n\n${text}\n\n`,
+        prompt: `${prompt}. ${subPrompt}:\n\n${text}`,
         temperature: 0.3,
         max_tokens: maxTokens,
         frequency_penalty: 0.0,

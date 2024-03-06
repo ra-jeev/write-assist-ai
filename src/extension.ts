@@ -8,7 +8,7 @@ import { WriteAssistAI } from './writeAssistAI';
 export function activate(context: vscode.ExtensionContext) {
   const writeAssist: WriteAssistAI = new WriteAssistAI();
   const aiActionProvider = vscode.languages.registerCodeActionsProvider(
-    ['markdown', 'plaintext'],
+    ['markdown', 'plaintext', 'tex', 'latex', 'bibtex'],
     writeAssist,
     {
       providedCodeActionKinds: WriteAssistAI.providedCodeActionKinds,

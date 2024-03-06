@@ -7,6 +7,12 @@
   "repository": {
     "url": "https://github.com/ra-jeev/write-assist-ai"
   },
+  "bugs": {
+    "url": "https://github.com/ra-jeev/write-assist-ai/issues"
+  },
+  "sponsor": {
+    "url": "https://github.com/sponsors/ra-jeev"
+  },
   "engines": {
     "vscode": "^1.78.0"
   },
@@ -14,17 +20,27 @@
     "Other"
   ],
   "keywords": [
-    "rewrite",
-    "rephrase",
+    "writing",
+    "assistant",
     "markdown",
     "openai",
-    "assist",
-    "chatgpt"
+    "latex",
+    "text",
+    "chatgpt",
+    "rewrite",
+    "rewriting"
   ],
   "icon": "assets/images/icon.png",
+  "galleryBanner": {
+    "theme": "light",
+    "color": "#ff7373"
+  },
   "activationEvents": [
     "onLanguage:markdown",
-    "onLanguage:plaintext"
+    "onLanguage:plaintext",
+    "onLanguage:latex",
+    "onLanguage:tex",
+    "onLanguage:bibtex"
   ],
   "main": "./dist/extension.js",
   "contributes": {
