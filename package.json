@@ -47,14 +47,10 @@
     "configuration": {
       "title": "Write Assist AI",
       "properties": {
-        "writeAssistAi.openAiApiKey": {
-          "type": "string",
-          "default": "",
-          "description": "Enter you OpenAI API Key here"
-        },
-        "writeAssistAi.maxTokens": {
-          "type": "number",
+        "writeAssistAi.openAi.maxTokens": {
+          "type": "integer",
           "default": 1200,
+          "order": 1,
           "description": "Enter the maximum number of tokens to use for each OpenAI API call"
         }
       }

@@ -4,6 +4,7 @@ import {
   CodeActionKind,
   CodeActionProvider,
   Range,
+  SecretStorage,
   Selection,
   TextDocument,
   window,
@@ -15,6 +16,11 @@ type WritingAction = {
   title: string;
   description: string;
   prompt: string;
+};
+
+type ExtensionConfig = {
+  apiKey?: string;
+  maxTokens: number;
 };
 
 export class WriteAssistAI implements CodeActionProvider {
@@ -74,9 +80,12 @@ export class WriteAssistAI implements CodeActionProvider {
   private allCommands: string[] = [];
   private actions: CodeAction[] = [];
   private currRange: Range | undefined;
+  private secrets: SecretStorage;
+  private config: ExtensionConfig | undefined;
 
-  constructor() {
-    this.openAiSvc = this.createOpenApiSvc();
+  constructor(secrets: SecretStorage) {
+    this.secrets = secrets;
+    this.readExtensionConfig();
     this.prepareCommandsAndActions();
   }
 
@@ -84,6 +93,26 @@ export class WriteAssistAI implements CodeActionProvider {
     return workspace
       .getConfiguration(WriteAssistAI.extensionConfigKey)
       .get<T>(key);
+  }
+
+  async updateConfiguration(key: string, value: any) {
+    try {
+      // Update in global settings
+      await workspace
+        .getConfiguration(WriteAssistAI.extensionConfigKey)
+        .update(key, value, true);
+    } catch (error) {
+      console.error(`No global configuration for ${key}`, error);
+    }
+
+    try {
+      // Update in workspace settings
+      await workspace
+        .getConfiguration(WriteAssistAI.extensionConfigKey)
+        .update(key, value);
+    } catch (error) {
+      console.error(`No workspace configuration for ${key}`, error);
+    }
   }
 
   prepareActionKind(
@@ -152,20 +181,66 @@ export class WriteAssistAI implements CodeActionProvider {
     return action;
   }
 
-  createOpenApiSvc(severity: string = 'info'): OpenAI | undefined {
+  async readFromSettingsAndMigrate(): Promise<{
+    apiKey: string;
+    maxTokens: number;
+  } | null> {
+    const apiKey = this.getConfiguration<string>('openAiApiKey');
+    if (apiKey) {
+      // Store the key in the secretStorage
+      await this.secrets.store('openAi.apiKey', apiKey);
+      // Delete the key from the settings
+      await this.updateConfiguration('openAiApiKey', undefined);
+
+      let maxTokens = this.getConfiguration<number>('maxTokens');
+      if (maxTokens) {
+        // Remove the old key from the settings
+        await this.updateConfiguration('maxTokens', undefined);
+        // Update the new key with the existing value
+        await this.updateConfiguration('openAi.maxTokens', maxTokens);
+      } else {
+        maxTokens = this.getConfiguration<number>('openAi.maxTokens') ?? 900;
+      }
+
+      return {
+        apiKey,
+        maxTokens,
+      };
+    }
+
+    return null;
+  }
+
+  async readExtensionConfig() {
+    const existingConfig = await this.readFromSettingsAndMigrate();
+    if (existingConfig) {
+      this.config = {
+        apiKey: existingConfig.apiKey,
+        maxTokens: existingConfig.maxTokens,
+      };
+
+      return;
+    }
+
+    const apiKey = await this.secrets.get('openAi.apiKey');
+    const maxTokens = this.getConfiguration<number>('openAi.maxTokens') ?? 900;
+
+    this.config = {
+      apiKey,
+      maxTokens,
+    };
+  }
+
+  createOpenApiSvc(): OpenAI | undefined {
     if (this.openAiSvc) {
       return this.openAiSvc;
     }
 
-    const apiKey = this.getConfiguration<string>('openAiApiKey');
+    const apiKey = this.config?.apiKey;
     if (!apiKey) {
-      const message =
-        'Missing OpenAI API Key. Please add your key in VSCode settings to use this extension.';
-      if (severity === 'error') {
-        window.showErrorMessage(message);
-      } else {
-        window.showInformationMessage(message);
-      }
+      window.showErrorMessage(
+        'No API key found, please set one in the settings'
+      );
 
       return;
     }
@@ -177,9 +252,9 @@ export class WriteAssistAI implements CodeActionProvider {
 
   async handleAction(prompt: string) {
     const editor = window.activeTextEditor;
-    const openAiSvc = this.createOpenApiSvc('error');
+    const openAiSvc = this.createOpenApiSvc();
 
-    if (!openAiSvc || !this.currRange || !editor) {
+    if (!openAiSvc || !this.currRange || !editor || !this.config) {
       return;
     }
 
@@ -188,7 +263,7 @@ export class WriteAssistAI implements CodeActionProvider {
     let selectionEnd = editor.selection.end;
 
     try {
-      const maxTokens = this.getConfiguration<number>('maxTokens');
+      const maxTokens = this.config.maxTokens;
       const fillerText = '\n\nThinking...';
 
       const fillerRes = await editor.edit((editBuilder) => {
