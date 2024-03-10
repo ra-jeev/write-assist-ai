@@ -1,5 +1,14 @@
 import { OpenAI, APIError } from 'openai';
-import * as vscode from 'vscode';
+import {
+  CodeAction,
+  CodeActionKind,
+  CodeActionProvider,
+  Range,
+  Selection,
+  TextDocument,
+  window,
+  workspace,
+} from 'vscode';
 
 type WritingAction = {
   id: string;
@@ -8,10 +17,10 @@ type WritingAction = {
   prompt: string;
 };
 
-export class WriteAssistAI implements vscode.CodeActionProvider {
+export class WriteAssistAI implements CodeActionProvider {
   public static readonly providedCodeActionKinds = [
-    vscode.CodeActionKind.RefactorRewrite,
-    vscode.CodeActionKind.QuickFix,
+    CodeActionKind.RefactorRewrite,
+    CodeActionKind.QuickFix,
   ];
 
   public static readonly toneOptions: string[] = [
@@ -63,8 +72,8 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
 
   private openAiSvc: OpenAI | undefined;
   private allCommands: string[] = [];
-  private actions: vscode.CodeAction[] = [];
-  private currRange: vscode.Range | undefined;
+  private actions: CodeAction[] = [];
+  private currRange: Range | undefined;
 
   constructor() {
     this.openAiSvc = this.createOpenApiSvc();
@@ -72,14 +81,14 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
   }
 
   getConfiguration<T>(key: string) {
-    return vscode.workspace
+    return workspace
       .getConfiguration(WriteAssistAI.extensionConfigKey)
       .get<T>(key);
   }
 
   prepareActionKind(
     writingActions: WritingAction[],
-    actionKind: vscode.CodeActionKind
+    actionKind: CodeActionKind
   ) {
     for (const writingAction of writingActions) {
       const action = this.createAction(writingAction, actionKind);
@@ -101,21 +110,18 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
       });
     }
 
-    this.prepareActionKind(
-      toneChangeActions,
-      vscode.CodeActionKind.RefactorRewrite
-    );
+    this.prepareActionKind(toneChangeActions, CodeActionKind.RefactorRewrite);
 
     this.prepareActionKind(
       WriteAssistAI.quickFixActions,
-      vscode.CodeActionKind.QuickFix
+      CodeActionKind.QuickFix
     );
   }
 
   provideCodeActions(
-    document: vscode.TextDocument,
-    range: vscode.Range
-  ): vscode.CodeAction[] | undefined {
+    document: TextDocument,
+    range: Range
+  ): CodeAction[] | undefined {
     // If nothing is selected then we won't provide any action
     if (range.isEmpty) {
       this.currRange = undefined;
@@ -133,9 +139,9 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
 
   createAction(
     writingAction: WritingAction,
-    actionKind: vscode.CodeActionKind
-  ): vscode.CodeAction {
-    const action = new vscode.CodeAction(writingAction.title, actionKind);
+    actionKind: CodeActionKind
+  ): CodeAction {
+    const action = new CodeAction(writingAction.title, actionKind);
     action.command = {
       command: `${WriteAssistAI.extensionConfigKey}.${writingAction.id}`,
       title: writingAction.title,
@@ -156,9 +162,9 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
       const message =
         'Missing OpenAI API Key. Please add your key in VSCode settings to use this extension.';
       if (severity === 'error') {
-        vscode.window.showErrorMessage(message);
+        window.showErrorMessage(message);
       } else {
-        vscode.window.showInformationMessage(message);
+        window.showInformationMessage(message);
       }
 
       return;
@@ -170,7 +176,7 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
   }
 
   async handleAction(prompt: string) {
-    const editor = vscode.window.activeTextEditor;
+    const editor = window.activeTextEditor;
     const openAiSvc = this.createOpenApiSvc('error');
 
     if (!openAiSvc || !this.currRange || !editor) {
@@ -190,7 +196,7 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
       });
 
       if (fillerRes) {
-        editor.selection = new vscode.Selection(
+        editor.selection = new Selection(
           editor.selection.end.line,
           0,
           editor.selection.end.line,
@@ -218,14 +224,11 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
       if (response.choices.length) {
         const result = response.choices[0].text.trim();
         const replaceRes = await editor.edit((editBuilder) => {
-          editBuilder.replace(
-            new vscode.Range(selectionStart, selectionEnd),
-            result
-          );
+          editBuilder.replace(new Range(selectionStart, selectionEnd), result);
         });
 
         if (replaceRes) {
-          editor.selection = new vscode.Selection(
+          editor.selection = new Selection(
             selectionStart.line,
             selectionStart.character,
             selectionEnd.line,
@@ -242,7 +245,7 @@ export class WriteAssistAI implements vscode.CodeActionProvider {
       }
 
       editor.edit((editBuilder) => {
-        editor.selection = new vscode.Selection(selectionStart, selectionEnd);
+        editor.selection = new Selection(selectionStart, selectionEnd);
         editBuilder.replace(editor.selection, errMessage);
       });
     }
