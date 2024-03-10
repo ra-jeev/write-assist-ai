@@ -231,18 +231,32 @@ export class WriteAssistAI implements CodeActionProvider {
     };
   }
 
-  createOpenApiSvc(): OpenAI | undefined {
+  async createOpenApiSvc(): Promise<OpenAI | undefined> {
     if (this.openAiSvc) {
       return this.openAiSvc;
     }
 
-    const apiKey = this.config?.apiKey;
-    if (!apiKey) {
-      window.showErrorMessage(
-        'No API key found, please set one in the settings'
-      );
-
+    if (!this.config) {
+      console.log('No config available');
       return;
+    }
+
+    let apiKey = this.config.apiKey;
+    if (!apiKey) {
+      apiKey = await window.showInputBox({
+        title: 'Your OpenAI API Key',
+        prompt: 'Enter your OpenAI API key here',
+        placeHolder: 'sk-xxxxxxxxxxxxxxxx',
+        password: true,
+      });
+
+      if (!apiKey) {
+        console.log('No API key provided');
+        return;
+      }
+
+      this.config.apiKey = apiKey;
+      await this.secrets.store('openAi.apiKey', apiKey);
     }
 
     return new OpenAI({
@@ -250,15 +264,32 @@ export class WriteAssistAI implements CodeActionProvider {
     });
   }
 
+  getOutputString(input: string): string {
+    return `\n\n${'-'.repeat(32)}\n${input}\n\n${'-'.repeat(32)}\n`;
+  }
+
   async handleAction(prompt: string) {
     const editor = window.activeTextEditor;
-    const openAiSvc = this.createOpenApiSvc();
 
-    if (!openAiSvc || !this.currRange || !editor || !this.config) {
+    if (!this.currRange || !editor || !this.config) {
       return;
     }
 
+    const openAiSvc = await this.createOpenApiSvc();
     let currRange = this.currRange;
+    if (!openAiSvc) {
+      await editor.edit((editBuilder) => {
+        editBuilder.insert(
+          currRange.end,
+          this.getOutputString(
+            'Error: No API Key entered in the config input box above.\nPlease retry the selection and set the key first.'
+          )
+        );
+      });
+
+      return;
+    }
+
     let selectionStart = editor.selection.start;
     let selectionEnd = editor.selection.end;
 
