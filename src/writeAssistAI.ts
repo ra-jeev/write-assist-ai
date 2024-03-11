@@ -1,26 +1,21 @@
-import { OpenAI, APIError } from 'openai';
 import {
   CodeAction,
   CodeActionKind,
   CodeActionProvider,
   Range,
-  SecretStorage,
   Selection,
   TextDocument,
   window,
-  workspace,
 } from 'vscode';
+
+import { OpenAiService } from './services/OpenAiService';
+import { ExtensionConfig } from './ExtensionConfig';
 
 type WritingAction = {
   id: string;
   title: string;
   description: string;
   prompt: string;
-};
-
-type ExtensionConfig = {
-  apiKey?: string;
-  maxTokens: number;
 };
 
 export class WriteAssistAI implements CodeActionProvider {
@@ -74,45 +69,15 @@ export class WriteAssistAI implements CodeActionProvider {
     },
   ];
 
-  public static readonly extensionConfigKey = 'writeAssistAi';
-
-  private openAiSvc: OpenAI | undefined;
+  private openAiSvc: OpenAiService | undefined;
   private allCommands: string[] = [];
   private actions: CodeAction[] = [];
   private currRange: Range | undefined;
-  private secrets: SecretStorage;
-  private config: ExtensionConfig | undefined;
+  private extensionConfig: ExtensionConfig;
 
-  constructor(secrets: SecretStorage) {
-    this.secrets = secrets;
-    this.readExtensionConfig();
+  constructor(config: ExtensionConfig) {
+    this.extensionConfig = config;
     this.prepareCommandsAndActions();
-  }
-
-  getConfiguration<T>(key: string) {
-    return workspace
-      .getConfiguration(WriteAssistAI.extensionConfigKey)
-      .get<T>(key);
-  }
-
-  async updateConfiguration(key: string, value: any) {
-    try {
-      // Update in global settings
-      await workspace
-        .getConfiguration(WriteAssistAI.extensionConfigKey)
-        .update(key, value, true);
-    } catch (error) {
-      console.error(`No global configuration for ${key}`, error);
-    }
-
-    try {
-      // Update in workspace settings
-      await workspace
-        .getConfiguration(WriteAssistAI.extensionConfigKey)
-        .update(key, value);
-    } catch (error) {
-      console.error(`No workspace configuration for ${key}`, error);
-    }
   }
 
   prepareActionKind(
@@ -172,7 +137,7 @@ export class WriteAssistAI implements CodeActionProvider {
   ): CodeAction {
     const action = new CodeAction(writingAction.title, actionKind);
     action.command = {
-      command: `${WriteAssistAI.extensionConfigKey}.${writingAction.id}`,
+      command: `${ExtensionConfig.sectionKey}.${writingAction.id}`,
       title: writingAction.title,
       tooltip: writingAction.description,
       arguments: [writingAction.prompt],
@@ -181,87 +146,23 @@ export class WriteAssistAI implements CodeActionProvider {
     return action;
   }
 
-  async readFromSettingsAndMigrate(): Promise<{
-    apiKey: string;
-    maxTokens: number;
-  } | null> {
-    const apiKey = this.getConfiguration<string>('openAiApiKey');
-    if (apiKey) {
-      // Store the key in the secretStorage
-      await this.secrets.store('openAi.apiKey', apiKey);
-      // Delete the key from the settings
-      await this.updateConfiguration('openAiApiKey', undefined);
-
-      let maxTokens = this.getConfiguration<number>('maxTokens');
-      if (maxTokens) {
-        // Remove the old key from the settings
-        await this.updateConfiguration('maxTokens', undefined);
-        // Update the new key with the existing value
-        await this.updateConfiguration('openAi.maxTokens', maxTokens);
-      } else {
-        maxTokens = this.getConfiguration<number>('openAi.maxTokens') ?? 900;
-      }
-
-      return {
-        apiKey,
-        maxTokens,
-      };
-    }
-
-    return null;
-  }
-
-  async readExtensionConfig() {
-    const existingConfig = await this.readFromSettingsAndMigrate();
-    if (existingConfig) {
-      this.config = {
-        apiKey: existingConfig.apiKey,
-        maxTokens: existingConfig.maxTokens,
-      };
-
-      return;
-    }
-
-    const apiKey = await this.secrets.get('openAi.apiKey');
-    const maxTokens = this.getConfiguration<number>('openAi.maxTokens') ?? 900;
-
-    this.config = {
-      apiKey,
-      maxTokens,
-    };
-  }
-
-  async createOpenApiSvc(): Promise<OpenAI | undefined> {
+  async createOpenApiSvc(): Promise<OpenAiService | undefined> {
     if (this.openAiSvc) {
       return this.openAiSvc;
     }
 
-    if (!this.config) {
-      console.log('No config available');
-      return;
-    }
-
-    let apiKey = this.config.apiKey;
+    let apiKey = await this.extensionConfig.getOpenAiApiKey();
     if (!apiKey) {
-      apiKey = await window.showInputBox({
-        title: 'Your OpenAI API Key',
-        prompt: 'Enter your OpenAI API key here',
-        placeHolder: 'sk-xxxxxxxxxxxxxxxx',
-        password: true,
-      });
+      apiKey = await this.extensionConfig.promptUserForApiKey();
 
       if (!apiKey) {
-        console.log('No API key provided');
         return;
       }
-
-      this.config.apiKey = apiKey;
-      await this.secrets.store('openAi.apiKey', apiKey);
     }
 
-    return new OpenAI({
-      apiKey,
-    });
+    const { maxTokens } = this.extensionConfig.getOpenAIConfig();
+
+    return new OpenAiService(apiKey, maxTokens);
   }
 
   getOutputString(input: string): string {
@@ -270,19 +171,18 @@ export class WriteAssistAI implements CodeActionProvider {
 
   async handleAction(prompt: string) {
     const editor = window.activeTextEditor;
-
-    if (!this.currRange || !editor || !this.config) {
+    if (!this.currRange || !editor) {
       return;
     }
 
+    const currRangeEnd = this.currRange.end;
     const openAiSvc = await this.createOpenApiSvc();
-    let currRange = this.currRange;
     if (!openAiSvc) {
       await editor.edit((editBuilder) => {
         editBuilder.insert(
-          currRange.end,
+          currRangeEnd,
           this.getOutputString(
-            'Error: No API Key entered in the config input box above.\nPlease retry the selection and set the key first.'
+            'Error: No API Key entered in the config input box above.\nPlease retry the selection and set the key.'
           )
         );
       });
@@ -294,11 +194,10 @@ export class WriteAssistAI implements CodeActionProvider {
     let selectionEnd = editor.selection.end;
 
     try {
-      const maxTokens = this.config.maxTokens;
       const fillerText = '\n\nThinking...';
 
       const fillerRes = await editor.edit((editBuilder) => {
-        editBuilder.insert(currRange.end, fillerText);
+        editBuilder.insert(currRangeEnd, fillerText);
       });
 
       if (fillerRes) {
@@ -313,46 +212,31 @@ export class WriteAssistAI implements CodeActionProvider {
         selectionEnd = editor.selection.end;
       }
 
-      const text = editor.document.getText(currRange);
+      const text = editor.document.getText(this.currRange);
       const subPrompt = `If the text contains any special syntax then strictly follow the same syntax, e.g. for markdown return markdown, for latex return latex etc. Do not return markdown for latex, and vice versa. Here is the text`;
-      /* eslint-disable @typescript-eslint/naming-convention */
-      const response = await openAiSvc.completions.create({
-        model: 'gpt-3.5-turbo-instruct',
-        prompt: `${prompt}. ${subPrompt}:\n\n${text}`,
-        temperature: 0.3,
-        max_tokens: maxTokens,
-        frequency_penalty: 0.0,
-        presence_penalty: 0.0,
-        n: 1,
+
+      const finalPrompt = `${prompt}. ${subPrompt}:\n\n${text}`;
+
+      const response = await openAiSvc.createCompletion(finalPrompt);
+      const replaceRes = await editor.edit((editBuilder) => {
+        editBuilder.replace(new Range(selectionStart, selectionEnd), response);
       });
-      /* eslint-enable @typescript-eslint/naming-convention */
 
-      if (response.choices.length) {
-        const result = response.choices[0].text.trim();
-        const replaceRes = await editor.edit((editBuilder) => {
-          editBuilder.replace(new Range(selectionStart, selectionEnd), result);
-        });
-
-        if (replaceRes) {
-          editor.selection = new Selection(
-            selectionStart.line,
-            selectionStart.character,
-            selectionEnd.line,
-            editor.document.lineAt(selectionEnd.line).text.length
-          );
-        }
+      if (replaceRes) {
+        editor.selection = new Selection(
+          selectionStart.line,
+          selectionStart.character,
+          selectionEnd.line,
+          editor.document.lineAt(selectionEnd.line).text.length
+        );
       }
     } catch (error) {
-      let errMessage = '';
-      if (error instanceof APIError) {
-        errMessage = `Error: ${error.code}: ${error.message}`;
-      } else {
-        errMessage = `Error: ${(error as any).message ?? 'Failed to process'}`;
-      }
-
       editor.edit((editBuilder) => {
         editor.selection = new Selection(selectionStart, selectionEnd);
-        editBuilder.replace(editor.selection, errMessage);
+        editBuilder.replace(
+          editor.selection,
+          `${(error as any).message ?? 'Error: Failed to process'}`
+        );
       });
     }
   }

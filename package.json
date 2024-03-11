@@ -47,7 +47,7 @@
     "configuration": {
       "title": "Write Assist AI",
       "properties": {
-        "writeAssistAi.openAi.maxTokens": {
+        "writeAssistAi.maxTokens": {
           "type": "integer",
           "default": 1200,
           "order": 1,
