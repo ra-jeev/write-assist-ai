@@ -50,8 +50,32 @@
         "writeAssistAi.maxTokens": {
           "type": "integer",
           "default": 1200,
+          "order": 0,
+          "description": "Set the maximum number of tokens to use for each API call"
+        },
+        "writeAssistAi.temperature": {
+          "type": "number",
+          "default": 0.3,
+          "minimum": 0,
+          "maximum": 2,
           "order": 1,
-          "description": "Enter the maximum number of tokens to use for each OpenAI API call"
+          "description": "Set the temperature parameter (0-2) for the API calls"
+        },
+        "writeAssistAi.openAi.model": {
+          "type": "string",
+          "enum": [
+            "gpt-3.5-turbo-instruct",
+            "gpt-3.5-turbo-instruct-0914",
+            "custom"
+          ],
+          "default": "gpt-3.5-turbo-instruct",
+          "order": 2,
+          "description": "Choose the default OpenAI model"
+        },
+        "writeAssistAi.openAi.customModel": {
+          "type": "string",
+          "order": 3,
+          "markdownDescription": "The custom OpenAI model to use (used only when '#writeAssistAi.openAi.model#' is set to `custom`).\n\nIf no value is provided then the default configured model will be used instead."
         }
       }
     }

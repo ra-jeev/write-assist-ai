@@ -1,10 +1,18 @@
 import { SecretStorage, window, workspace } from 'vscode';
+import { type OpenAiConfig } from './services/OpenAiService';
 
 enum ConfigurationKeys {
   deprecatedOpenAiApiKey = 'openAiApiKey',
   openAiApiKey = 'openAi.apiKey',
   maxTokens = 'maxTokens',
+  temperature = 'temperature',
+  model = 'openAi.model',
+  customModel = 'openAi.customModel',
 }
+
+const DEFAULT_MAX_TOKENS = 1200;
+const DEFAULT_TEMPERATURE = 0.3;
+const DEFAULT_OPENAI_MODEL = 'gpt-3.5-turbo-instruct';
 
 export class ExtensionConfig {
   public static readonly sectionKey = 'writeAssistAi';
@@ -15,8 +23,10 @@ export class ExtensionConfig {
     this.migrateOpenAiApiKeyConfig();
   }
 
-  getConfiguration<T>(key: string) {
-    return workspace.getConfiguration(ExtensionConfig.sectionKey).get<T>(key);
+  getConfiguration<T>(key: string, defaultValue: T) {
+    return workspace
+      .getConfiguration(ExtensionConfig.sectionKey)
+      .get<T>(key, defaultValue);
   }
 
   async updateConfiguration(key: string, value: any) {
@@ -41,7 +51,8 @@ export class ExtensionConfig {
 
   async migrateOpenAiApiKeyConfig(): Promise<void> {
     const apiKey = this.getConfiguration<string>(
-      ConfigurationKeys.deprecatedOpenAiApiKey
+      ConfigurationKeys.deprecatedOpenAiApiKey,
+      ''
     );
 
     if (apiKey) {
@@ -83,13 +94,43 @@ export class ExtensionConfig {
     return apiKey;
   }
 
-  getOpenAIConfig() {
+  getOpenAIConfig(): OpenAiConfig {
     const maxTokens = this.getConfiguration<number>(
-      ConfigurationKeys.maxTokens
+      ConfigurationKeys.maxTokens,
+      DEFAULT_MAX_TOKENS
     );
+
+    const temperature = this.getConfiguration<number>(
+      ConfigurationKeys.temperature,
+      DEFAULT_TEMPERATURE
+    );
+
+    const model = this.getConfiguration<string>(
+      ConfigurationKeys.model,
+      DEFAULT_OPENAI_MODEL
+    );
+
+    if (model === 'custom') {
+      let customModel = this.getConfiguration<string>(
+        ConfigurationKeys.customModel,
+        DEFAULT_OPENAI_MODEL
+      );
+
+      if (!customModel) {
+        customModel = DEFAULT_OPENAI_MODEL;
+      }
+
+      return {
+        maxTokens,
+        model: customModel,
+        temperature,
+      };
+    }
 
     return {
       maxTokens,
+      model,
+      temperature,
     };
   }
 }

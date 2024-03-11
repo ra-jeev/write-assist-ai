@@ -160,9 +160,7 @@ export class WriteAssistAI implements CodeActionProvider {
       }
     }
 
-    const { maxTokens } = this.extensionConfig.getOpenAIConfig();
-
-    return new OpenAiService(apiKey, maxTokens);
+    return new OpenAiService(apiKey, this.extensionConfig.getOpenAIConfig());
   }
 
   getOutputString(input: string): string {

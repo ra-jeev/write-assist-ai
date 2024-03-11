@@ -1,25 +1,31 @@
 import { OpenAI, APIError } from 'openai';
 
+export type OpenAiConfig = {
+  model: string;
+  maxTokens: number;
+  temperature: number;
+};
+
 export class OpenAiService {
   private readonly openAiSvc: OpenAI;
-  private maxTokens: number;
+  private config: OpenAiConfig;
 
-  constructor(apiKey: string, maxTokens: number = 1200) {
+  constructor(apiKey: string, config: OpenAiConfig) {
     this.openAiSvc = new OpenAI({
       apiKey,
     });
 
-    this.maxTokens = maxTokens;
+    this.config = config;
   }
 
   async createCompletion(prompt: string): Promise<string> {
     try {
       /* eslint-disable @typescript-eslint/naming-convention */
       const response = await this.openAiSvc.completions.create({
-        model: 'gpt-3.5-turbo-instruct',
+        model: this.config.model,
         prompt,
-        temperature: 0.3,
-        max_tokens: this.maxTokens,
+        temperature: this.config.temperature,
+        max_tokens: this.config.maxTokens,
         n: 1,
       });
       /* eslint-enable @typescript-eslint/naming-convention */
@@ -32,7 +38,9 @@ export class OpenAiService {
     } catch (error) {
       let errMessage = '';
       if (error instanceof APIError) {
-        errMessage = `Error: ${error.code}: ${error.message}`;
+        errMessage = `${error.name}: ${error.type}: ${
+          error.code ? error.code + ': ' + error.message : error.message
+        }`;
       } else {
         errMessage = `Error: ${(error as any).message ?? 'Failed to process'}`;
       }
