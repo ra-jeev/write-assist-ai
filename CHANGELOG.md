@@ -4,15 +4,30 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 
 ## [Unreleased]
 
-* Config options to change the OpenAI models, and set the temperature of API calls
+--
 
-## [0.1.0] - 2024-03-06
+## [v0.2.0] - 2024-03-12
+
+### Added
+
+* Configurable temperature and model (with custom option) setting
+* Runtime prompt for getting the OpenAI API Key from the user
+
+### Security
+
+* Store the OpenAI API Keys in `secretStorage` for enhanced security
+
+### Removed
+
+* Existing setting for OpenAI API Key, and move any saved keys to `secretStorage`
+
+## [v0.1.0] - 2024-03-06
 
 ### Added
 
 * Support for TeX/LaTeX files.
 
-## [0.0.10] - 2024-03-06
+## [v0.0.10] - 2024-03-06
 
 ### Fixed
 
@@ -26,11 +41,11 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 
 * Better error messaging in case of API errors
 
-## [0.0.9] - 2023-05-29
+## [v0.0.9] - 2023-05-29
 
 Update the demo gif
 
-## [0.0.8] - 2023-05-29
+## [v0.0.8] - 2023-05-29
 
 ### Added
 
@@ -43,32 +58,32 @@ Update the demo gif
   * Expand selection (Make text verbose)
   * Shorten selection (Make text concise)
 
-## [0.0.7] - 2023-05-24
+## [v0.0.7] - 2023-05-24
 
 Changing the API Key type to String
 
-## [0.0.6] - 2023-05-24
+## [v0.0.6] - 2023-05-24
 
 * Fixed the extension configuration key
 * Update README and add extension demo gif
 
-## [0.0.5] - 2023-05-19
+## [v0.0.5] - 2023-05-19
 
 Update README
 
-## [0.0.4] - 2023-05-19
+## [v0.0.4] - 2023-05-19
 
 * Add the extension icon
 * Update the changelog
 
-## [0.0.3] - 2023-05-19
+## [v0.0.3] - 2023-05-19
 
 * Remove the browser field from webpack
 
-## [0.0.2] - 2023-05-19
+## [v0.0.2] - 2023-05-19
 
 * Change webpack environment to node
 
-## [0.0.1] - 2023-05-19
+## [v0.0.1] - 2023-05-19
 
 * Initial release

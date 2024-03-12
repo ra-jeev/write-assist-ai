@@ -1,46 +1,71 @@
 # Write Assist AI
 
-WriteAssistAI is a VSCode extension that leverages OpenAI APIs to provide users with AI-assisted writing capabilities for their markdown / plain text files. This extension enables users to rephrase, summarize, or expand existing texts. It can also suggest short headlines for the selected text.
+The WriteAssistAI extension for VSCode utilizes OpenAI APIs to offer AI-powered writing assistance for markdown, LaTeX and plain text files. This extension allows users to rephrase, summarize, or expand their current text, as well as provide suggestions for short headlines for selected text.
 
-## Features
+## 🎯 Features
 
-This AI text assistant offers a variety of writing styles to choose from. To access these styles, or other features, select the desired text in your markdown/text files, click on the Code Actions bulb tooltip, and then click on the desired action.
+This AI text assistant provides a range of writing styles for you to select from. To access these styles, as well as other features, simply select the text you want to rewrite in a supported file. Then, click on the Code Actions 💡 tooltip and choose the desired action.
 
 ![Extension Demo](/assets/images/WriteAssistAiDemo.gif)
 
-Below is the available feature list:
+Current feature list:
 
-* Rewrite text in various tones. Available tones: professional, casual, formal, friendly, informative, authoritative
+* Rewrite the text using different tones. You can choose from professional, casual, formal, friendly, informative, and authoritative tones.
 * Rephrase selected text
 * Suggest headlines for selected text
 * Summarize selected text
 * Expand selected text (make it verbose)
 * Shorten selected text (make it concise)
 
-## Requirements
+## ✅ Requirements
 
-To use the extension you need to provide your own OpenAI API Key in the VSCode settings.
+To use the extension you need to provide your own OpenAI API Key.
 
-## Extension Settings
+## 🛠️ Installation
+
+You can install the *Write Assist AI* extension from the VS Code Marketplace.
+
+[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ra-jeev.write-assist-ai)
+
+## ⚙️ Extension Settings
 
 It exposes the following settings:
 
-* `writeAssistAi.openAiApiKey`: Your Open AI API Key.
-* `writeAssistAi.maxTokens`: Maximum number of tokens to use for each Open AI API call. Default is 1200.
+* `writeAssistAi.maxTokens`: Maximum number of tokens to use for each Open AI API call. The default is `1200`.
+* `writeAssistAi.temperature`: Temperature value to use for the API calls. The default is `0.3`.
+* `writeAssistAi.openAi.model`: The OpenAI model to use. The default is `gpt-3.5-turbo-instruct`.
+* `writeAssistAi.openAi.customModel`: To use a custom model, select `custom` from the `writeAssistAi.openAi.model` dropdown menu, and enter your model name here.
 
-## Known Issues
+In addition to the settings mentioned above, you will need to provide your `OpenAI API Key` when you first use the extension (or later, if you have not already provided a key). This key will be stored securely in VSCode's `secretStorage` to ensure its safety.
 
---
+## 🐛 Known Issues
 
-## Release Notes
+* #9
 
-### 0.1.0
+## 🚀 Release Notes
+
+### v0.2.0
+
+#### Added
+
+* Configurable temperature and model (with custom option) setting
+* Runtime prompt for getting the OpenAI API Key from the user
+
+#### Security
+
+* Store the OpenAI API Keys in `secretStorage` for enhanced security
+
+#### Removed
+
+* Existing setting for OpenAI API Key, and move any saved keys to `secretStorage`
+
+### v0.1.0
 
 #### Added
 
 * Support for TeX/LaTeX files.
 
-### 0.0.10
+### v0.0.10
 
 #### Fixed
 
@@ -54,26 +79,14 @@ It exposes the following settings:
 
 * Better error messaging in case of API errors
 
-### 0.0.9
+### v0.0.9
 
 Update the demo gif
 
-### 0.0.8
-
-#### Added
-
-* Support for plain text files
-* One new rewrite tone, authoritative
-* More actions
-  * Rephrase text
-  * Suggest headlines
-  * Summarize selection
-  * Expand selection (Make text verbose)
-  * Shorten selection (Make text concise)
-
-## Changelog
+## 📜 Changelog
 
 To check the complete changelog [click here](/CHANGELOG.md)
 
-## LICENSE
+## 📋 LICENSE
+
 This extension is licensed under the [MIT License](/LICENSE)
