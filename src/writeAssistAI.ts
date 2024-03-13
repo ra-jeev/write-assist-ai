@@ -2,6 +2,7 @@ import {
   CodeAction,
   CodeActionKind,
   CodeActionProvider,
+  Position,
   Range,
   Selection,
   TextDocument,
@@ -74,6 +75,7 @@ export class WriteAssistAI implements CodeActionProvider {
   private actions: CodeAction[] = [];
   private currRange: Range | undefined;
   private extensionConfig: ExtensionConfig;
+  private currentlyProcessing = false;
 
   constructor(config: ExtensionConfig) {
     this.extensionConfig = config;
@@ -116,9 +118,9 @@ export class WriteAssistAI implements CodeActionProvider {
     document: TextDocument,
     range: Range
   ): CodeAction[] | undefined {
-    // If nothing is selected then we won't provide any action
-    if (range.isEmpty) {
-      this.currRange = undefined;
+    // If nothing is selected, or if already some processing is
+    // under progress, then we won't provide any action
+    if (range.isEmpty || this.currentlyProcessing) {
       return;
     }
 
@@ -160,11 +162,53 @@ export class WriteAssistAI implements CodeActionProvider {
       }
     }
 
-    return new OpenAiService(apiKey, this.extensionConfig.getOpenAIConfig());
+    this.openAiSvc = new OpenAiService(
+      apiKey,
+      this.extensionConfig.getOpenAIConfig()
+    );
+
+    return this.openAiSvc;
   }
 
-  getOutputString(input: string): string {
-    return `\n\n${'-'.repeat(32)}\n${input}\n\n${'-'.repeat(32)}\n`;
+  async insertText(location: Position, text: string) {
+    const editor = window.activeTextEditor;
+    if (!editor) {
+      return;
+    }
+
+    const response = await editor.edit((editBuilder) => {
+      editBuilder.insert(
+        location,
+        `\n\n${'*'.repeat(50)}\n${text}\n${'*'.repeat(50)}\n`
+      );
+    });
+
+    if (response) {
+      const lines = text.split('\n');
+      const startingLineNo = location.line + 3; // We're adding the text 3 lines below
+      const endingLineNo = startingLineNo + lines.length - 1;
+      editor.selection = new Selection(
+        startingLineNo,
+        0,
+        endingLineNo,
+        lines[lines.length - 1].length
+      );
+
+      return editor.selection;
+    }
+
+    return;
+  }
+
+  async replaceText(location: Selection, text: string) {
+    const editor = window.activeTextEditor;
+    if (!editor) {
+      return;
+    }
+
+    return await editor.edit((editBuilder) => {
+      editBuilder.replace(location, text);
+    });
   }
 
   async handleAction(prompt: string) {
@@ -173,69 +217,40 @@ export class WriteAssistAI implements CodeActionProvider {
       return;
     }
 
+    this.currentlyProcessing = true;
     const currRangeEnd = this.currRange.end;
     const openAiSvc = await this.createOpenApiSvc();
     if (!openAiSvc) {
-      await editor.edit((editBuilder) => {
-        editBuilder.insert(
-          currRangeEnd,
-          this.getOutputString(
-            'Error: No API Key entered in the config input box above.\nPlease retry the selection and set the key.'
-          )
-        );
-      });
+      await this.insertText(
+        currRangeEnd,
+        'Error: No API Key entered in the config input box above.\nPlease retry the selection and set the key.'
+      );
 
       return;
     }
 
-    let selectionStart = editor.selection.start;
-    let selectionEnd = editor.selection.end;
+    let selection: Selection | undefined;
+    let message = '';
 
     try {
-      const fillerText = '\n\nThinking...';
-
-      const fillerRes = await editor.edit((editBuilder) => {
-        editBuilder.insert(currRangeEnd, fillerText);
-      });
-
-      if (fillerRes) {
-        editor.selection = new Selection(
-          editor.selection.end.line,
-          0,
-          editor.selection.end.line,
-          editor.selection.end.character
-        );
-
-        selectionStart = editor.selection.start;
-        selectionEnd = editor.selection.end;
-      }
+      selection = await this.insertText(currRangeEnd, 'Thinking...');
 
       const text = editor.document.getText(this.currRange);
-      const subPrompt = `If the text contains any special syntax then strictly follow the same syntax, e.g. for markdown return markdown, for latex return latex etc. Do not return markdown for latex, and vice versa. Here is the text`;
-
+      const subPrompt = `If the text contains any special syntax then strictly follow the same syntax, e.g. for markdown return markdown, for latex return latex etc. Do not return markdown for latex, and vice versa. Here is the text (may contain multiple newlines in between):`;
       const finalPrompt = `${prompt}. ${subPrompt}:\n\n${text}`;
 
-      const response = await openAiSvc.createCompletion(finalPrompt);
-      const replaceRes = await editor.edit((editBuilder) => {
-        editBuilder.replace(new Range(selectionStart, selectionEnd), response);
-      });
-
-      if (replaceRes) {
-        editor.selection = new Selection(
-          selectionStart.line,
-          selectionStart.character,
-          selectionEnd.line,
-          editor.document.lineAt(selectionEnd.line).text.length
-        );
-      }
+      message = await openAiSvc.createCompletion(finalPrompt);
     } catch (error) {
-      editor.edit((editBuilder) => {
-        editor.selection = new Selection(selectionStart, selectionEnd);
-        editBuilder.replace(
-          editor.selection,
-          `${(error as any).message ?? 'Error: Failed to process'}`
-        );
-      });
+      message = (error as any).message ?? 'Error: Failed to process';
     }
+
+    if (selection) {
+      await this.replaceText(selection, message);
+    } else {
+      await this.insertText(currRangeEnd, message);
+    }
+
+    this.currentlyProcessing = false;
+    this.currRange = undefined;
   }
 }
