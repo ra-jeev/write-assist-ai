@@ -10,14 +10,7 @@ import {
 } from 'vscode';
 
 import { OpenAiService } from './services/OpenAiService';
-import { ExtensionConfig } from './ExtensionConfig';
-
-type WritingAction = {
-  id: string;
-  title: string;
-  description: string;
-  prompt: string;
-};
+import { ExtensionConfig, type WritingAction } from './ExtensionConfig';
 
 export class WriteAssistAI implements CodeActionProvider {
   public static readonly providedCodeActionKinds = [
@@ -79,7 +72,24 @@ export class WriteAssistAI implements CodeActionProvider {
 
   constructor(config: ExtensionConfig) {
     this.extensionConfig = config;
-    this.prepareCommandsAndActions();
+    this.prepareActionsFromConfig();
+  }
+
+  prepareActionsFromConfig() {
+    const actionsFromConfig = this.extensionConfig.getActions();
+    if (actionsFromConfig.rewriteActions.length) {
+      this.prepareActionKind(
+        actionsFromConfig.rewriteActions,
+        CodeActionKind.RefactorRewrite
+      );
+    }
+
+    if (actionsFromConfig.quickFixes) {
+      this.prepareActionKind(
+        actionsFromConfig.quickFixes,
+        CodeActionKind.QuickFix
+      );
+    }
   }
 
   prepareActionKind(

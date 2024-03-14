@@ -1,6 +1,18 @@
 import { SecretStorage, window, workspace } from 'vscode';
 import { type OpenAiConfig } from './services/OpenAiService';
 
+export type WritingAction = {
+  id: string;
+  title: string;
+  description: string;
+  prompt: string;
+};
+
+export type ExtensionActions = {
+  quickFixes: WritingAction[];
+  rewriteActions: WritingAction[];
+};
+
 enum ConfigurationKeys {
   deprecatedOpenAiApiKey = 'openAiApiKey',
   openAiApiKey = 'openAi.apiKey',
@@ -8,6 +20,8 @@ enum ConfigurationKeys {
   temperature = 'temperature',
   model = 'openAi.model',
   customModel = 'openAi.customModel',
+  quickFixes = 'quickFixes',
+  rewriteOptions = 'rewriteOptions',
 }
 
 const DEFAULT_MAX_TOKENS = 1200;
@@ -132,5 +146,27 @@ export class ExtensionConfig {
       model,
       temperature,
     };
+  }
+
+  getActions(): ExtensionActions {
+    const fixes = this.getConfiguration<Omit<WritingAction, 'id'>[]>(
+      ConfigurationKeys.quickFixes,
+      []
+    );
+
+    const quickFixes = fixes.map((fix, index) => {
+      return { ...fix, id: `quick-${index}` };
+    });
+
+    const actions = this.getConfiguration<Omit<WritingAction, 'id'>[]>(
+      ConfigurationKeys.rewriteOptions,
+      []
+    );
+
+    const rewriteActions = actions.map((action, index) => {
+      return { ...action, id: `rewrite-${index}` };
+    });
+
+    return { quickFixes, rewriteActions };
   }
 }

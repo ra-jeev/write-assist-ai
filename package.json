@@ -33,7 +33,7 @@
   "icon": "assets/images/icon.png",
   "galleryBanner": {
     "theme": "light",
-    "color": "#ff7373"
+    "color": "#ffc600"
   },
   "activationEvents": [
     "onLanguage:markdown",
@@ -76,6 +76,139 @@
           "type": "string",
           "order": 3,
           "markdownDescription": "The custom OpenAI model to use (used only when '#writeAssistAi.openAi.model#' is set to `custom`).\n\nIf no value is provided then the default configured model will be used instead."
+        },
+        "writeAssistAi.quickFixes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "examples": [
+              {
+                "title": "<command name/short title>",
+                "description": "<command description>",
+                "prompt": "<LLM prompt for the given command>"
+              }
+            ],
+            "properties": {
+              "title": {
+                "type": "string",
+                "default": "",
+                "description": "The command title. Shows up in the editor tooltip menu"
+              },
+              "description": {
+                "type": "string",
+                "default": "",
+                "description": "The description of the command"
+              },
+              "prompt": {
+                "type": "string",
+                "default": "",
+                "description": "The prompt to use for this command when interacting with an LLM"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "title",
+              "description",
+              "prompt"
+            ]
+          },
+          "default": [
+            {
+              "title": "Rephrase the selected text",
+              "description": "Rephrases the selected text",
+              "prompt": "Rephrase the given text and make the sentences more clear and readable."
+            },
+            {
+              "title": "Suggest headlines for selection",
+              "description": "Suggests some appropriate headlines for the selected text",
+              "prompt": "Suggest 2-3 short headlines based on the given text."
+            },
+            {
+              "title": "Summarize the selected text",
+              "description": "Writes a summary for the selected text",
+              "prompt": "Write a short summary for the given text."
+            },
+            {
+              "title": "Expand the selected text",
+              "description": "Builds upon the selected text and makes it verbose",
+              "prompt": "Continue building on the given text, make it better and verbose."
+            },
+            {
+              "title": "Shorten the selected text",
+              "description": "Based on the selected text tries to make it concise",
+              "prompt": "Try to make the given text concise while keeping its essence."
+            }
+          ],
+          "markdownDescription": "The commands that will show up in the quick fix section of the editor tooltip when you select some text.\n\n**Example:**\n```json\n[\n  {\n    \"title\": \"<command name/short title>\",\n    \"description\": \"<command description>\",\n    \"prompt\": \"<LLM prompt for the given command>\"\n  }\n]\n```"
+        },
+        "writeAssistAi.rewriteOptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "examples": [
+              {
+                "title": "<command name/short title>",
+                "description": "<command description>",
+                "prompt": "<LLM prompt for the given command>"
+              }
+            ],
+            "properties": {
+              "title": {
+                "type": "string",
+                "default": "",
+                "description": "The command title. Shows up in the editor tooltip menu"
+              },
+              "description": {
+                "type": "string",
+                "default": "",
+                "description": "The description of the command"
+              },
+              "prompt": {
+                "type": "string",
+                "default": "",
+                "description": "The prompt to use for this command when interacting with an LLM"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "title",
+              "description",
+              "prompt"
+            ]
+          },
+          "default": [
+            {
+              "title": "Change to professional tone",
+              "description": "Changes the selected text's tone to professional",
+              "prompt": "Make the given text better and rewrite it in a professional tone."
+            },
+            {
+              "title": "Change to casual tone",
+              "description": "Changes the selected text's tone to casual",
+              "prompt": "Make the given text better and rewrite it in a casual tone."
+            },
+            {
+              "title": "Change to formal tone",
+              "description": "Changes the selected text's tone to formal",
+              "prompt": "Make the given text better and rewrite it in a formal tone."
+            },
+            {
+              "title": "Change to friendly tone",
+              "description": "Changes the selected text's tone to friendly",
+              "prompt": "Make the given text better and rewrite it in a friendly tone."
+            },
+            {
+              "title": "Change to informative tone",
+              "description": "Changes the selected text's tone to informative",
+              "prompt": "Make the given text better and rewrite it in an informative tone."
+            },
+            {
+              "title": "Change to authoritative tone",
+              "description": "Changes the selected text's tone to authoritative",
+              "prompt": "Make the given text better and rewrite it in an authoritative tone."
+            }
+          ],
+          "markdownDescription": "The commands which will show up in the rewrite section of the editor tooltip when you select some text.\n\n**Example:**\n```json\n[\n  {\n    \"title\": \"<command name/short title>\",\n    \"description\": \"<command description>\",\n    \"prompt\": \"<LLM prompt for the given command>\"\n  }\n]\n```"
         }
       }
     }
