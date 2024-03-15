@@ -1,4 +1,9 @@
-import { SecretStorage, window, workspace } from 'vscode';
+import {
+  ConfigurationChangeEvent,
+  ExtensionContext,
+  window,
+  workspace,
+} from 'vscode';
 import { type OpenAiConfig } from './services/OpenAiService';
 
 export type WritingAction = {
@@ -30,10 +35,23 @@ const DEFAULT_OPENAI_MODEL = 'gpt-3.5-turbo-instruct';
 
 export class ExtensionConfig {
   public static readonly sectionKey = 'writeAssistAi';
-  private readonly secrets: SecretStorage;
+  private readonly commandConfigKeys = [
+    ConfigurationKeys.quickFixes,
+    ConfigurationKeys.rewriteOptions,
+  ];
+  private readonly context: ExtensionContext;
+  private readonly listener: (
+    ctx: ExtensionContext,
+    config: ExtensionConfig
+  ) => any;
 
-  constructor(secrets: SecretStorage) {
-    this.secrets = secrets;
+  constructor(
+    context: ExtensionContext,
+    listener: (ctx: ExtensionContext, config: ExtensionConfig) => any
+  ) {
+    this.context = context;
+    this.listener = listener;
+    this.registerConfigChangeListener();
     this.migrateOpenAiApiKeyConfig();
   }
 
@@ -82,11 +100,11 @@ export class ExtensionConfig {
   }
 
   async getOpenAiApiKey() {
-    return this.secrets.get(ConfigurationKeys.openAiApiKey);
+    return this.context.secrets.get(ConfigurationKeys.openAiApiKey);
   }
 
   async storeOpenAiApiKey(apiKey: string) {
-    return this.secrets.store(ConfigurationKeys.openAiApiKey, apiKey);
+    return this.context.secrets.store(ConfigurationKeys.openAiApiKey, apiKey);
   }
 
   async promptUserForApiKey() {
@@ -168,5 +186,22 @@ export class ExtensionConfig {
     });
 
     return { quickFixes, rewriteActions };
+  }
+
+  onConfigurationChanged(event: ConfigurationChangeEvent) {
+    for (const configKey of this.commandConfigKeys) {
+      if (
+        event.affectsConfiguration(`${ExtensionConfig.sectionKey}.${configKey}`)
+      ) {
+        this.listener(this.context, this);
+        return;
+      }
+    }
+  }
+
+  registerConfigChangeListener() {
+    workspace.onDidChangeConfiguration((event) =>
+      this.onConfigurationChanged(event)
+    );
   }
 }

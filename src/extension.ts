@@ -2,8 +2,23 @@ import { commands, ExtensionContext, languages } from 'vscode';
 import { WriteAssistAI } from './writeAssistAI';
 import { ExtensionConfig } from './ExtensionConfig';
 
-export function activate(context: ExtensionContext) {
-  const config = new ExtensionConfig(context.secrets);
+const handleCommandsConfigChange = (
+  context: ExtensionContext,
+  config: ExtensionConfig
+) => {
+  // Dispose all the existing subscriptions
+  for (const subscription of context.subscriptions) {
+    subscription.dispose();
+  }
+
+  // Register commands and actions afresh
+  registerCommandsAndActions(context, config);
+};
+
+const registerCommandsAndActions = (
+  context: ExtensionContext,
+  config: ExtensionConfig
+) => {
   const writeAssist: WriteAssistAI = new WriteAssistAI(config);
   const aiActionProvider = languages.registerCodeActionsProvider(
     ['markdown', 'plaintext', 'tex', 'latex', 'bibtex'],
@@ -21,6 +36,13 @@ export function activate(context: ExtensionContext) {
       )
     );
   }
+};
+
+export function activate(context: ExtensionContext) {
+  registerCommandsAndActions(
+    context,
+    new ExtensionConfig(context, handleCommandsConfigChange)
+  );
 }
 
 export function deactivate() {}

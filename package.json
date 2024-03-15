@@ -208,7 +208,7 @@
               "prompt": "Make the given text better and rewrite it in an authoritative tone."
             }
           ],
-          "markdownDescription": "The commands which will show up in the rewrite section of the editor tooltip when you select some text.\n\n**Example:**\n```json\n[\n  {\n    \"title\": \"<command name/short title>\",\n    \"description\": \"<command description>\",\n    \"prompt\": \"<LLM prompt for the given command>\"\n  }\n]\n```"
+          "markdownDescription": "The commands that will show up in the rewrite section of the editor tooltip when you select some text.\n\n**Example:**\n```json\n[\n  {\n    \"title\": \"<command name/short title>\",\n    \"description\": \"<command description>\",\n    \"prompt\": \"<LLM prompt for the given command>\"\n  }\n]\n```"
         }
       }
     }
