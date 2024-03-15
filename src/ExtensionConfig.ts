@@ -31,7 +31,7 @@ enum ConfigurationKeys {
 
 const DEFAULT_MAX_TOKENS = 1200;
 const DEFAULT_TEMPERATURE = 0.3;
-const DEFAULT_OPENAI_MODEL = 'gpt-3.5-turbo-instruct';
+const DEFAULT_OPENAI_MODEL = 'gpt-4';
 
 export class ExtensionConfig {
   public static readonly sectionKey = 'writeAssistAi';
