@@ -246,10 +246,11 @@ export class WriteAssistAI implements CodeActionProvider {
       selection = await this.insertText(currRangeEnd, 'Thinking...');
 
       const text = editor.document.getText(this.currRange);
-      const subPrompt = `If the text contains any special syntax then strictly follow the same syntax, e.g. for markdown return markdown, for latex return latex etc. Do not return markdown for latex, and vice versa. Here is the text (may contain multiple newlines in between):`;
-      const finalPrompt = `${prompt}. ${subPrompt}:\n\n${text}`;
+      // const subPrompt = `If the text contains any special syntax then strictly follow the same syntax, e.g. for markdown return markdown, for latex return latex etc. Do not return markdown for latex, and vice versa. Here is the text (may contain multiple newlines in between):`;
+      // const finalPrompt = `${prompt}. ${subPrompt}:\n\n${text}`;
 
-      message = await openAiSvc.createCompletion(finalPrompt);
+      // message = await openAiSvc.createCompletion(finalPrompt);
+      message = await openAiSvc.createChatCompletion(prompt, text);
     } catch (error) {
       message = (error as any).message ?? 'Error: Failed to process';
     }
