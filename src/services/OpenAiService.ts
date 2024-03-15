@@ -4,6 +4,7 @@ export type OpenAiConfig = {
   model: string;
   maxTokens: number;
   temperature: number;
+  systemPrompt: string;
 };
 
 export class OpenAiService {
@@ -20,10 +21,16 @@ export class OpenAiService {
 
   async createChatCompletion(cmdPrompt: string, text: string): Promise<string> {
     try {
-      const messages: OpenAI.ChatCompletionMessageParam[] = [
+      const messages: OpenAI.ChatCompletionMessageParam[] = [];
+
+      if (this.config.systemPrompt) {
+        messages.push({ role: 'system', content: this.config.systemPrompt });
+      }
+
+      messages.push(
         { role: 'system', content: cmdPrompt },
-        { role: 'user', content: text },
-      ];
+        { role: 'user', content: text }
+      );
 
       /* eslint-disable @typescript-eslint/naming-convention */
       const response = await this.openAiSvc.chat.completions.create({

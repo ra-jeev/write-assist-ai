@@ -81,6 +81,13 @@
           "order": 3,
           "markdownDescription": "The custom OpenAI model to use (used only when '#writeAssistAi.openAi.model#' is set to `custom`).\n\nIf no value is provided then the default configured model will be used instead."
         },
+        "writeAssistAi.systemPrompt": {
+          "type": "string",
+          "default": "You are a helpful assistant. Your job is to perform the tasks related to rewriting text inputs given by the user. If the input text contains any special syntax then strictly follow that syntax, e.g. for markdown return markdown, for latex return latex etc. Do not return markdown for latex, and vice versa.",
+          "order": 4,
+          "editPresentation": "multilineText",
+          "markdownDescription": "Set the system prompt to use for the API calls.\n\nThe prompt specific to the action performed by the user will follow this system prompt."
+        },
         "writeAssistAi.quickFixes": {
           "type": "array",
           "items": {

@@ -27,6 +27,7 @@ enum ConfigurationKeys {
   customModel = 'openAi.customModel',
   quickFixes = 'quickFixes',
   rewriteOptions = 'rewriteOptions',
+  systemPrompt = 'systemPrompt',
 }
 
 const DEFAULT_MAX_TOKENS = 1200;
@@ -137,32 +138,32 @@ export class ExtensionConfig {
       DEFAULT_TEMPERATURE
     );
 
-    const model = this.getConfiguration<string>(
+    const systemPrompt = this.getConfiguration<string>(
+      ConfigurationKeys.systemPrompt,
+      ''
+    );
+
+    let model = this.getConfiguration<string>(
       ConfigurationKeys.model,
       DEFAULT_OPENAI_MODEL
     );
 
     if (model === 'custom') {
-      let customModel = this.getConfiguration<string>(
+      model = this.getConfiguration<string>(
         ConfigurationKeys.customModel,
         DEFAULT_OPENAI_MODEL
       );
 
-      if (!customModel) {
-        customModel = DEFAULT_OPENAI_MODEL;
+      if (!model) {
+        model = DEFAULT_OPENAI_MODEL;
       }
-
-      return {
-        maxTokens,
-        model: customModel,
-        temperature,
-      };
     }
 
     return {
       maxTokens,
       model,
       temperature,
+      systemPrompt,
     };
   }
 
