@@ -6,6 +6,23 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 
 --
 
+## [v0.3.0] - 2024-03-16
+
+### Added
+
+* A new command in the `Command Palette` to set/reset the OpenAI API Key
+* A common `system prompt` config for use with the LLM calls
+* Dynamically configurable `Quick Fix` and `Rewrite` actions
+* Use of `v1/chat/completions` endpoint of `OpenAI`
+
+### Fixed
+
+* [API response display issue](https://github.com/ra-jeev/write-assist-ai/issues/9) while setting the API Key
+
+### Removed
+
+* Use of legacy `v1/completions` endpoint of `OpenAI`
+
 ## [v0.2.0] - 2024-03-12
 
 ### Added
