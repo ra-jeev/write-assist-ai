@@ -1,6 +1,6 @@
 # Write Assist AI
 
-The WriteAssistAI extension for VSCode utilizes OpenAI APIs to offer AI-powered writing assistance for markdown, LaTeX and plain text files. It comes with some default actions to rephrase selected text, or perform tasks like tone change, summarize, expand etc. These actions are completely configurable through the extension's settings.
+The WriteAssistAI extension for VSCode utilizes the OpenAI APIs to offer AI-powered writing assistance for markdown, LaTeX and plain text files. It comes with some default actions to rephrase the selected text, or perform tasks like tone change, summarize, expand etc. These actions are completely configurable through the extension's settings.
 
 ## 🎯 Features
 

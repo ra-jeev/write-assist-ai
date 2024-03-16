@@ -165,7 +165,7 @@ export class WriteAssistAI implements CodeActionProvider {
     return action;
   }
 
-  async createOpenApiSvc(): Promise<OpenAiService | undefined> {
+  async createOpenAiSvc(): Promise<OpenAiService | undefined> {
     if (this.openAiSvc) {
       return this.openAiSvc;
     }
@@ -236,7 +236,7 @@ export class WriteAssistAI implements CodeActionProvider {
 
     this.currentlyProcessing = true;
     const currRangeEnd = this.currRange.end;
-    const openAiSvc = await this.createOpenApiSvc();
+    const openAiSvc = await this.createOpenAiSvc();
     if (!openAiSvc) {
       await this.insertText(
         currRangeEnd,
