@@ -7,8 +7,8 @@ const handleCommandsConfigChange = (
   config: ExtensionConfig
 ) => {
   // Dispose all the existing subscriptions
-  for (const subscription of context.subscriptions) {
-    subscription.dispose();
+  while (context.subscriptions.length) {
+    context.subscriptions.pop()?.dispose();
   }
 
   // Register commands and actions afresh
@@ -36,6 +36,13 @@ const registerCommandsAndActions = (
       )
     );
   }
+
+  // Add the command for OpenAI API Key configuration
+  context.subscriptions.push(
+    commands.registerCommand(ExtensionConfig.openAiApiKeyCmd, () =>
+      config.promptUserForApiKey()
+    )
+  );
 };
 
 export function activate(context: ExtensionContext) {

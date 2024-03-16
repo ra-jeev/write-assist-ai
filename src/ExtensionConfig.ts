@@ -1,6 +1,8 @@
 import {
   ConfigurationChangeEvent,
+  Disposable,
   ExtensionContext,
+  SecretStorageChangeEvent,
   window,
   workspace,
 } from 'vscode';
@@ -30,29 +32,33 @@ enum ConfigurationKeys {
   systemPrompt = 'systemPrompt',
 }
 
+enum CommandKeys {
+  openAiApiKey = 'openAiApiKey',
+}
+
 const DEFAULT_MAX_TOKENS = 1200;
 const DEFAULT_TEMPERATURE = 0.3;
 const DEFAULT_OPENAI_MODEL = 'gpt-4';
 
 export class ExtensionConfig {
   public static readonly sectionKey = 'writeAssistAi';
-  private readonly commandConfigKeys = [
-    ConfigurationKeys.quickFixes,
-    ConfigurationKeys.rewriteOptions,
-  ];
+  public static readonly openAiApiKeyCmd = `${ExtensionConfig.sectionKey}.${CommandKeys.openAiApiKey}`;
   private readonly context: ExtensionContext;
-  private readonly listener: (
+  private readonly cmdKeysListener: (
     ctx: ExtensionContext,
     config: ExtensionConfig
   ) => any;
+  private readonly openAiKeyListeners: (() => any)[] = [];
 
   constructor(
     context: ExtensionContext,
-    listener: (ctx: ExtensionContext, config: ExtensionConfig) => any
+    cmdKeysListener: (ctx: ExtensionContext, config: ExtensionConfig) => any
   ) {
     this.context = context;
-    this.listener = listener;
+    this.cmdKeysListener = cmdKeysListener;
+
     this.registerConfigChangeListener();
+    this.registerSecretsChangeListener();
     this.migrateOpenAiApiKeyConfig();
   }
 
@@ -117,7 +123,8 @@ export class ExtensionConfig {
       ignoreFocusOut: true,
     });
 
-    if (!apiKey) {
+    // user might enter empty string to reset the key, so check against undefined
+    if (apiKey === undefined) {
       console.log('No API key provided by user');
       return;
     }
@@ -190,11 +197,16 @@ export class ExtensionConfig {
   }
 
   onConfigurationChanged(event: ConfigurationChangeEvent) {
-    for (const configKey of this.commandConfigKeys) {
+    const cmdKeys = [
+      ConfigurationKeys.quickFixes,
+      ConfigurationKeys.rewriteOptions,
+    ];
+
+    for (const configKey of cmdKeys) {
       if (
         event.affectsConfiguration(`${ExtensionConfig.sectionKey}.${configKey}`)
       ) {
-        this.listener(this.context, this);
+        this.cmdKeysListener(this.context, this);
         return;
       }
     }
@@ -204,5 +216,29 @@ export class ExtensionConfig {
     workspace.onDidChangeConfiguration((event) =>
       this.onConfigurationChanged(event)
     );
+  }
+
+  onSecretChanged(event: SecretStorageChangeEvent) {
+    if (event.key === ConfigurationKeys.openAiApiKey) {
+      this.openAiKeyListeners.forEach((listener) => listener());
+    }
+  }
+
+  registerSecretsChangeListener() {
+    this.context.secrets.onDidChange((event) => this.onSecretChanged(event));
+  }
+
+  registerOpenAiKeyListener(listener: () => any) {
+    this.openAiKeyListeners.push(listener);
+    this.context.subscriptions.push(
+      new Disposable(() => this.deregisterOpenAiKeyListener(listener))
+    );
+  }
+
+  private deregisterOpenAiKeyListener(listener: () => any) {
+    const index = this.openAiKeyListeners.indexOf(listener);
+    if (index !== -1) {
+      this.openAiKeyListeners.splice(index, 1);
+    }
   }
 }

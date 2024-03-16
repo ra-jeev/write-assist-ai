@@ -44,6 +44,14 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "writeAssistAi.openAiApiKey",
+        "title": "Set the OpenAI Api Key",
+        "shortTitle": "OpenAI Api Key",
+        "category": "Write Assist AI"
+      }
+    ],
     "configuration": {
       "title": "Write Assist AI",
       "properties": {

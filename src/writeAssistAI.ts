@@ -73,6 +73,13 @@ export class WriteAssistAI implements CodeActionProvider {
   constructor(config: ExtensionConfig) {
     this.extensionConfig = config;
     this.prepareActionsFromConfig();
+    this.extensionConfig.registerOpenAiKeyListener(() =>
+      this.onOpenAiApiKeyChange()
+    );
+  }
+
+  onOpenAiApiKeyChange() {
+    this.openAiSvc = undefined;
   }
 
   prepareActionsFromConfig() {
