@@ -27,10 +27,10 @@ export class OpenAiService {
         messages.push({ role: 'system', content: this.config.systemPrompt });
       }
 
-      messages.push(
-        { role: 'system', content: cmdPrompt },
-        { role: 'user', content: text }
-      );
+      const userPrompt = `${cmdPrompt}${
+        cmdPrompt.endsWith(':') ? '\n\n' : ':\n\n'
+      }${text}`;
+      messages.push({ role: 'user', content: userPrompt });
 
       /* eslint-disable @typescript-eslint/naming-convention */
       const response = await this.openAiSvc.chat.completions.create({
