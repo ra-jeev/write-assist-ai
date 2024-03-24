@@ -174,24 +174,26 @@ export class ExtensionConfig {
     };
   }
 
-  getActions(): ExtensionActions {
-    const fixes = this.getConfiguration<Omit<WritingAction, 'id'>[]>(
-      ConfigurationKeys.quickFixes,
-      []
-    );
-
-    const quickFixes = fixes.map((fix, index) => {
-      return { ...fix, id: `quick-${index}` };
-    });
-
+  getActionsType(type: string): WritingAction[] {
     const actions = this.getConfiguration<Omit<WritingAction, 'id'>[]>(
-      ConfigurationKeys.rewriteOptions,
+      type,
       []
     );
 
-    const rewriteActions = actions.map((action, index) => {
-      return { ...action, id: `rewrite-${index}` };
+    const finalActions = actions.map((action, index) => {
+      const id = `${type.toLowerCase()}-${index}`;
+      return { ...action, id, prompt: action.prompt.trim() };
     });
+
+    return finalActions;
+  }
+
+  getActions(): ExtensionActions {
+    const quickFixes = this.getActionsType(ConfigurationKeys.quickFixes);
+
+    const rewriteActions = this.getActionsType(
+      ConfigurationKeys.rewriteOptions
+    );
 
     return { quickFixes, rewriteActions };
   }
