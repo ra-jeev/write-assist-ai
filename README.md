@@ -67,6 +67,12 @@ For instance, you can include a new `Quick Fix` action in your `settings.json` f
 
 ## 🚀 Release Notes
 
+### v0.3.1
+
+#### Fixed
+
+* Move the action prompt to user message prefix of the OpenAI API call.
+
 ### v0.3.0
 
 #### Added
@@ -118,10 +124,6 @@ For instance, you can include a new `Quick Fix` action in your `settings.json` f
 #### Added
 
 * Better error messaging in case of API errors
-
-### v0.0.9
-
-Update the demo gif
 
 ## 📜 Changelog
 

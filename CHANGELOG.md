@@ -6,6 +6,12 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 
 --
 
+## [v0.3.1] - 2024-03-24
+
+### Fixed
+
+* Move the action prompt to user message prefix of the OpenAI API call.
+
 ## [v0.3.0] - 2024-03-16
 
 ### Added
