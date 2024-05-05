@@ -18,51 +18,6 @@ export class WriteAssistAI implements CodeActionProvider {
     CodeActionKind.QuickFix,
   ];
 
-  public static readonly toneOptions: string[] = [
-    'professional',
-    'casual',
-    'formal',
-    'friendly',
-    'informative',
-    'authoritative',
-  ];
-
-  public static readonly quickFixActions = [
-    {
-      id: 'rephrase',
-      title: 'Rephrase the selected text',
-      description: 'Rephrases the selected text',
-      prompt:
-        'Rephrase the following text and make the sentences more clear and readable',
-    },
-    {
-      id: 'suggest-titles',
-      title: 'Suggest headlines for selection',
-      description: 'Suggests some appropriate titles for the selected text',
-      prompt: 'Suggest some short headlines for the following text',
-    },
-    {
-      id: 'summarize',
-      title: 'Summarize the selected text',
-      description: 'Write a summary for the selected text',
-      prompt: 'Write a short summary for the following text',
-    },
-    {
-      id: 'expand',
-      title: 'Expand the selected text',
-      description: 'Builds upon the selected text and makes it verbose',
-      prompt:
-        'Continue building on the following text, make it better and verbose',
-    },
-    {
-      id: 'shorten',
-      title: 'Shorten the selected text',
-      description: 'Based on the selected text tries to make it concise',
-      prompt:
-        'Based on the following text, try to make it readable and concise at the same time',
-    },
-  ];
-
   private openAiSvc: OpenAiService | undefined;
   private allCommands: string[] = [];
   private actions: CodeAction[] = [];
@@ -110,25 +65,6 @@ export class WriteAssistAI implements CodeActionProvider {
         this.allCommands.push(action.command.command);
       }
     }
-  }
-
-  prepareCommandsAndActions() {
-    const toneChangeActions = [];
-    for (const tone of WriteAssistAI.toneOptions) {
-      toneChangeActions.push({
-        id: tone,
-        title: `Rewrite in ${tone} tone`,
-        description: `Changes the selected text's tone to ${tone}`,
-        prompt: `Make the following text better and rewrite it in a ${tone} tone`,
-      });
-    }
-
-    this.prepareActionKind(toneChangeActions, CodeActionKind.RefactorRewrite);
-
-    this.prepareActionKind(
-      WriteAssistAI.quickFixActions,
-      CodeActionKind.QuickFix
-    );
   }
 
   provideCodeActions(
@@ -253,10 +189,6 @@ export class WriteAssistAI implements CodeActionProvider {
       selection = await this.insertText(currRangeEnd, 'Thinking...');
 
       const text = editor.document.getText(this.currRange);
-      // const subPrompt = `If the text contains any special syntax then strictly follow the same syntax, e.g. for markdown return markdown, for latex return latex etc. Do not return markdown for latex, and vice versa. Here is the text (may contain multiple newlines in between):`;
-      // const finalPrompt = `${prompt}. ${subPrompt}:\n\n${text}`;
-
-      // message = await openAiSvc.createCompletion(finalPrompt);
       message = await openAiSvc.createChatCompletion(prompt, text);
     } catch (error) {
       message = (error as any).message ?? 'Error: Failed to process';
