@@ -28,13 +28,18 @@ export class WriteAssistAI implements CodeActionProvider {
   constructor(config: ExtensionConfig) {
     this.extensionConfig = config;
     this.prepareActionsFromConfig();
-    this.extensionConfig.registerOpenAiKeyListener(() =>
-      this.onOpenAiApiKeyChange()
+    // CHECK IF WE CAN GET MULTIPLE CONFIG KEY CHANGES SIMULTANEOUSLY
+    this.extensionConfig.registerOpenAiConfigChangeListener(
+      (isApiKeyChange: boolean) => this.onOpenAiApiConfigChange(isApiKeyChange)
     );
   }
 
-  onOpenAiApiKeyChange() {
-    this.openAiSvc = undefined;
+  onOpenAiApiConfigChange(apiKeyChanged: boolean) {
+    if (apiKeyChanged) {
+      this.openAiSvc = undefined;
+    } else if (this.openAiSvc) {
+      this.openAiSvc.config = this.extensionConfig.getOpenAIConfig();
+    }
   }
 
   prepareActionsFromConfig() {

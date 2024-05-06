@@ -20,7 +20,8 @@ export type ExtensionActions = {
   rewriteActions: WritingAction[];
 };
 
-enum ConfigurationKeys {
+// Keys for the extensions configuration settings
+export enum ConfigurationKeys {
   deprecatedOpenAiApiKey = 'openAiApiKey',
   openAiApiKey = 'openAi.apiKey',
   maxTokens = 'maxTokens',
@@ -32,6 +33,8 @@ enum ConfigurationKeys {
   systemPrompt = 'systemPrompt',
 }
 
+// Keys for the VSCode Command Pallette Commands
+// that this extension provides
 enum CommandKeys {
   openAiApiKey = 'openAiApiKey',
 }
@@ -48,7 +51,9 @@ export class ExtensionConfig {
     ctx: ExtensionContext,
     config: ExtensionConfig
   ) => any;
-  private readonly openAiKeyListeners: (() => any)[] = [];
+  private openAiConfigChangeListener:
+    | ((isApiKeyChange: boolean) => any)
+    | undefined;
 
   constructor(
     context: ExtensionContext,
@@ -199,17 +204,40 @@ export class ExtensionConfig {
   }
 
   onConfigurationChanged(event: ConfigurationChangeEvent) {
-    const cmdKeys = [
+    const configCmdKeys = [
       ConfigurationKeys.quickFixes,
       ConfigurationKeys.rewriteOptions,
     ];
 
-    for (const configKey of cmdKeys) {
+    const configOpenAiKeys = [
+      ConfigurationKeys.maxTokens,
+      ConfigurationKeys.temperature,
+      ConfigurationKeys.model,
+      ConfigurationKeys.customModel,
+      ConfigurationKeys.systemPrompt,
+    ];
+
+    // First look for changes in the Commands Config
+    for (const configKey of configCmdKeys) {
       if (
         event.affectsConfiguration(`${ExtensionConfig.sectionKey}.${configKey}`)
       ) {
         this.cmdKeysListener(this.context, this);
         return;
+      }
+    }
+
+    if (this.openAiConfigChangeListener) {
+      for (const configKey of configOpenAiKeys) {
+        if (
+          event.affectsConfiguration(
+            `${ExtensionConfig.sectionKey}.${configKey}`
+          )
+        ) {
+          // as soon as we find one change, we bail out
+          this.openAiConfigChangeListener(false);
+          return;
+        }
       }
     }
   }
@@ -221,8 +249,11 @@ export class ExtensionConfig {
   }
 
   onSecretChanged(event: SecretStorageChangeEvent) {
-    if (event.key === ConfigurationKeys.openAiApiKey) {
-      this.openAiKeyListeners.forEach((listener) => listener());
+    if (
+      event.key === ConfigurationKeys.openAiApiKey &&
+      this.openAiConfigChangeListener
+    ) {
+      this.openAiConfigChangeListener(true);
     }
   }
 
@@ -230,17 +261,12 @@ export class ExtensionConfig {
     this.context.secrets.onDidChange((event) => this.onSecretChanged(event));
   }
 
-  registerOpenAiKeyListener(listener: () => any) {
-    this.openAiKeyListeners.push(listener);
+  registerOpenAiConfigChangeListener(
+    listener: (isApiKeyChange: boolean) => any
+  ) {
+    this.openAiConfigChangeListener = listener;
     this.context.subscriptions.push(
-      new Disposable(() => this.deregisterOpenAiKeyListener(listener))
+      new Disposable(() => (this.openAiConfigChangeListener = undefined))
     );
-  }
-
-  private deregisterOpenAiKeyListener(listener: () => any) {
-    const index = this.openAiKeyListeners.indexOf(listener);
-    if (index !== -1) {
-      this.openAiKeyListeners.splice(index, 1);
-    }
   }
 }
