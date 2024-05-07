@@ -10,7 +10,11 @@ import {
 } from 'vscode';
 
 import { OpenAiService } from './services/OpenAiService';
-import { ExtensionConfig, type WritingAction } from './ExtensionConfig';
+import {
+  ExtensionConfig,
+  type LanguageConfig,
+  type WritingAction,
+} from './ExtensionConfig';
 
 export class WriteAssistAI implements CodeActionProvider {
   public static readonly providedCodeActionKinds = [
@@ -20,7 +24,7 @@ export class WriteAssistAI implements CodeActionProvider {
 
   private openAiSvc: OpenAiService | undefined;
   private allCommands: string[] = [];
-  private actions: CodeAction[] = [];
+  private actions: LanguageConfig<CodeAction[]> = { default: [] };
   private currRange: Range | undefined;
   private extensionConfig: ExtensionConfig;
   private currentlyProcessing = false;
@@ -28,7 +32,6 @@ export class WriteAssistAI implements CodeActionProvider {
   constructor(config: ExtensionConfig) {
     this.extensionConfig = config;
     this.prepareActionsFromConfig();
-    // CHECK IF WE CAN GET MULTIPLE CONFIG KEY CHANGES SIMULTANEOUSLY
     this.extensionConfig.registerOpenAiConfigChangeListener(
       (isApiKeyChange: boolean) => this.onOpenAiApiConfigChange(isApiKeyChange)
     );
@@ -44,30 +47,32 @@ export class WriteAssistAI implements CodeActionProvider {
 
   prepareActionsFromConfig() {
     const actionsFromConfig = this.extensionConfig.getActions();
-    if (actionsFromConfig.rewriteActions.length) {
-      this.prepareActionKind(
-        actionsFromConfig.rewriteActions,
-        CodeActionKind.RefactorRewrite
-      );
-    }
+    this.prepareActionKind(
+      actionsFromConfig.rewriteActions,
+      CodeActionKind.RefactorRewrite
+    );
 
-    if (actionsFromConfig.quickFixes) {
-      this.prepareActionKind(
-        actionsFromConfig.quickFixes,
-        CodeActionKind.QuickFix
-      );
-    }
+    this.prepareActionKind(
+      actionsFromConfig.quickFixes,
+      CodeActionKind.QuickFix
+    );
   }
 
   prepareActionKind(
-    writingActions: WritingAction[],
+    writingActions: LanguageConfig<WritingAction[]>,
     actionKind: CodeActionKind
   ) {
-    for (const writingAction of writingActions) {
-      const action = this.createAction(writingAction, actionKind);
-      this.actions.push(action);
-      if (action.command) {
-        this.allCommands.push(action.command.command);
+    for (const languageId in writingActions) {
+      if (!(languageId in this.actions)) {
+        this.actions[languageId] = [];
+      }
+
+      for (const writingAction of writingActions[languageId]) {
+        const action = this.createAction(writingAction, actionKind);
+        this.actions[languageId].push(action);
+        if (action.command) {
+          this.allCommands.push(action.command.command);
+        }
       }
     }
   }
@@ -84,7 +89,7 @@ export class WriteAssistAI implements CodeActionProvider {
 
     this.currRange = range;
 
-    return this.actions;
+    return this.actions[document.languageId] ?? this.actions.default;
   }
 
   get commands(): string[] {
@@ -194,7 +199,11 @@ export class WriteAssistAI implements CodeActionProvider {
       selection = await this.insertText(currRangeEnd, 'Thinking...');
 
       const text = editor.document.getText(this.currRange);
-      message = await openAiSvc.createChatCompletion(prompt, text);
+      message = await openAiSvc.createChatCompletion(
+        prompt,
+        text,
+        editor.document.languageId
+      );
     } catch (error) {
       message = (error as any).message ?? 'Error: Failed to process';
     }

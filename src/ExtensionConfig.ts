@@ -16,8 +16,13 @@ export type WritingAction = {
 };
 
 export type ExtensionActions = {
-  quickFixes: WritingAction[];
-  rewriteActions: WritingAction[];
+  quickFixes: LanguageConfig<WritingAction[]>;
+  rewriteActions: LanguageConfig<WritingAction[]>;
+};
+
+export type LanguageConfig<T> = {
+  [key: string]: T;
+  default: T;
 };
 
 // Keys for the extensions configuration settings
@@ -68,9 +73,24 @@ export class ExtensionConfig {
   }
 
   getConfiguration<T>(key: string, defaultValue: T) {
-    return workspace
-      .getConfiguration(ExtensionConfig.sectionKey)
-      .get<T>(key, defaultValue);
+    const workspaceConfig = workspace.getConfiguration(
+      ExtensionConfig.sectionKey
+    );
+
+    const value: LanguageConfig<T> = {
+      default: workspaceConfig.get<T>(key, defaultValue),
+    };
+
+    const inspectedValue = workspaceConfig.inspect<T>(key);
+    if (inspectedValue?.languageIds) {
+      for (const languageId of inspectedValue.languageIds) {
+        value[languageId] = workspace
+          .getConfiguration(ExtensionConfig.sectionKey, { languageId })
+          .get(key) as T;
+      }
+    }
+
+    return value;
   }
 
   async updateConfiguration(key: string, value: any) {
@@ -99,9 +119,9 @@ export class ExtensionConfig {
       ''
     );
 
-    if (apiKey) {
+    if (apiKey.default) {
       // Store the key in the secretStorage
-      await this.storeOpenAiApiKey(apiKey);
+      await this.storeOpenAiApiKey(apiKey.default);
 
       // Delete the key from the settings
       await this.updateConfiguration(
@@ -160,37 +180,40 @@ export class ExtensionConfig {
       DEFAULT_OPENAI_MODEL
     );
 
-    if (model === 'custom') {
+    if (model.default === 'custom') {
       model = this.getConfiguration<string>(
         ConfigurationKeys.customModel,
         DEFAULT_OPENAI_MODEL
       );
 
-      if (!model) {
-        model = DEFAULT_OPENAI_MODEL;
+      if (!model.default) {
+        model.default = DEFAULT_OPENAI_MODEL;
       }
     }
 
     return {
-      maxTokens,
-      model,
-      temperature,
+      maxTokens: maxTokens.default,
+      model: model.default,
+      temperature: temperature.default,
       systemPrompt,
     };
   }
 
-  getActionsType(type: string): WritingAction[] {
-    const actions = this.getConfiguration<Omit<WritingAction, 'id'>[]>(
+  getActionsType(type: string): LanguageConfig<WritingAction[]> {
+    const actionsCfg = this.getConfiguration<Omit<WritingAction, 'id'>[]>(
       type,
       []
     );
 
-    const finalActions = actions.map((action, index) => {
-      const id = `${type.toLowerCase()}-${index}`;
-      return { ...action, id, prompt: action.prompt.trim() };
-    });
+    const actions: LanguageConfig<WritingAction[]> = { default: [] };
+    for (const languageId in actionsCfg) {
+      actions[languageId] = actionsCfg[languageId].map((action, index) => {
+        const id = `${type.toLowerCase()}-${languageId}-${index}`;
+        return { ...action, id, prompt: action.prompt.trim() };
+      });
+    }
 
-    return finalActions;
+    return actions;
   }
 
   getActions(): ExtensionActions {

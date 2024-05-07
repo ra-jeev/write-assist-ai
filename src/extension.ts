@@ -31,9 +31,9 @@ const registerCommandsAndActions = (
   context.subscriptions.push(aiActionProvider);
   for (const command of writeAssist.commands) {
     context.subscriptions.push(
-      commands.registerCommand(command, (args) =>
-        writeAssist.handleAction(args)
-      )
+      commands.registerCommand(command, (args) => {
+        writeAssist.handleAction(args);
+      })
     );
   }
 

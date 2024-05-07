@@ -1,10 +1,11 @@
 import { OpenAI, APIError } from 'openai';
+import { LanguageConfig } from '../ExtensionConfig';
 
 export type OpenAiConfig = {
   model: string;
   maxTokens: number;
   temperature: number;
-  systemPrompt: string;
+  systemPrompt: LanguageConfig<string>;
 };
 
 export class OpenAiService {
@@ -23,12 +24,28 @@ export class OpenAiService {
     this._config = config;
   }
 
-  async createChatCompletion(cmdPrompt: string, text: string): Promise<string> {
+  getSystemPrompt(languageId: string) {
+    if (languageId in this._config.systemPrompt) {
+      return this._config.systemPrompt[languageId];
+    }
+
+    return this._config.systemPrompt.default;
+  }
+
+  async createChatCompletion(
+    cmdPrompt: string,
+    text: string,
+    languageId: string
+  ): Promise<string> {
     try {
       const messages: OpenAI.ChatCompletionMessageParam[] = [];
 
-      if (this._config.systemPrompt) {
-        messages.push({ role: 'system', content: this._config.systemPrompt });
+      const systemPrompt = this.getSystemPrompt(languageId);
+      if (systemPrompt) {
+        messages.push({
+          role: 'system',
+          content: systemPrompt,
+        });
       }
 
       const userPrompt = `${cmdPrompt}${
