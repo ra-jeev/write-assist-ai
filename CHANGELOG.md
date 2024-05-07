@@ -6,6 +6,16 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 
 --
 
+## [v0.4.0] - 2024-05-07
+
+### Added
+
+* Language specific configuration capability for System Prompts, QuickFix Actions & RewriteOptions.
+
+### Fixed
+
+* OpenAI config changes take effect immediately without a reload.
+
 ## [v0.3.1] - 2024-03-24
 
 ### Fixed

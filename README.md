@@ -37,9 +37,9 @@ It exposes the following settings:
 * `writeAssistAi.temperature`: Temperature value to use for the API calls. The default is `0.3`.
 * `writeAssistAi.openAi.model`: The OpenAI model to use. The default is `gpt-3.5-turbo-instruct`.
 * `writeAssistAi.openAi.customModel`: To use a custom model, select `custom` from the `writeAssistAi.openAi.model` dropdown menu, and enter your model name here.
-* `writeAssistAi.systemPrompt`: Sets a common system prompt to be used with LLM API calls.
-* `writeAssistAi.quickFixes`: Sets the actions that show up in the editor's tooltip menu under `Quick Fix` section.
-* `writeAssistAi.rewriteOptions`: Sets the commands that show up in the editor's tooltip menu under `Rewrite` section. 
+* `writeAssistAi.systemPrompt`: Sets a common system prompt to be used with LLM API calls. You can also configure language specific system prompts. To do this, type `@lang:<languageId> Write Assist AI` e.g. `@lang:markdown Write Assist AI` in your VSCode settings UI, and set the required system prompt for the selected language.
+* `writeAssistAi.quickFixes`: Sets the actions that show up in the editor's tooltip menu under `Quick Fix` section. This is also configurable per language.
+* `writeAssistAi.rewriteOptions`: Sets the commands that show up in the editor's tooltip menu under `Rewrite` section. This is also configurable per language.
 
 In addition, you need to set your `OpenAI API Key` in the `Command Palette` under `Write Assist AI` category. If not configured already, you can also set it when you use the extension for the first time. Your key will be securely stored in VSCode's `secretStorage` for safety.
 
@@ -61,11 +61,42 @@ For instance, you can include a new `Quick Fix` action in your `settings.json` f
 ]
 ```
 
+To specify actions for a specific language, place the actions within the corresponding language configuration block. For example, to ensure that the action *"Translate into French"* only applies to *markdown* files, you can do the following in your `settings.json`:
+
+```json
+{
+  "[markdown]": {
+    // other settings
+    "writeAssistAi.quickFixes": [
+      // ...
+      {
+        "title": "Translate into French",
+        "description": "Translates the selected text into French",
+        "prompt": "Translate the given text into French."
+      },
+      // ...
+    ]
+  }
+}
+```
+
+***Note:** Default actions are activated only when no action has been specified for a supported language. If you have defined specific actions for a particular language, only those actions will be visible for that language.
+
 ## 🐛 Known Issues
 
 --
 
 ## 🚀 Release Notes
+
+### v0.4.0
+
+#### Added
+
+* Language specific configuration capability for System Prompts, QuickFix Actions & RewriteOptions.
+
+#### Fixed
+
+* OpenAI config changes take effect immediately without a reload.
 
 ### v0.3.1
 
