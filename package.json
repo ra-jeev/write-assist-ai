@@ -93,8 +93,9 @@
           "type": "string",
           "default": "You are a helpful assistant. Your job is to perform the tasks related to rewriting text inputs given by the user. If the input text contains any special syntax then strictly follow that syntax, e.g. for markdown return markdown, for latex return latex etc. Do not return markdown for latex, and vice versa.",
           "order": 4,
+          "scope": "language-overridable",
           "editPresentation": "multilineText",
-          "markdownDescription": "Set the system prompt to use for the API calls.\n\nThe prompt specific to the action performed by the user will follow this system prompt."
+          "markdownDescription": "Set the system prompt to use for the API calls. The prompt specific to a performed action will be in addition to this system prompt.\n\n**Language Specific Config:** You can also different system prompts for different languages. To do that open your VS Code settings UI and type `@lang:<languageId> Write Assist AI` e.g. `@lang:markdown Write Assist AI` and set the System Prompt for the selected language."
         },
         "writeAssistAi.quickFixes": {
           "type": "array",
@@ -158,7 +159,8 @@
               "prompt": "Try to make the given text concise while keeping its essence."
             }
           ],
-          "markdownDescription": "The commands that will show up in the quick fix section of the editor tooltip when you select some text.\n\n**Example:**\n```json\n[\n  {\n    \"title\": \"<command name/short title>\",\n    \"description\": \"<command description>\",\n    \"prompt\": \"<LLM prompt for the given command>\"\n  }\n]\n```"
+          "scope": "language-overridable",
+          "markdownDescription": "The commands that will show up in the quick fix section of the editor tooltip when you select some text.\n\n**Language Specific Config:** To configure actions per language, just put the new actions under the particular language config block, e.g. for markdown, put `\"writeAssistAi.quickFixes\"` under `\"[markdown]\"` block.\n\n**Example Action Config:**\n```json\n[\n  {\n    \"title\": \"<command name/short title>\",\n    \"description\": \"<command description>\",\n    \"prompt\": \"<LLM prompt for the given command>\"\n  }\n]\n```"
         },
         "writeAssistAi.rewriteOptions": {
           "type": "array",
@@ -227,7 +229,8 @@
               "prompt": "Make the given text better and rewrite it in an authoritative tone."
             }
           ],
-          "markdownDescription": "The commands that will show up in the rewrite section of the editor tooltip when you select some text.\n\n**Example:**\n```json\n[\n  {\n    \"title\": \"<command name/short title>\",\n    \"description\": \"<command description>\",\n    \"prompt\": \"<LLM prompt for the given command>\"\n  }\n]\n```"
+          "scope": "language-overridable",
+          "markdownDescription": "The commands that will show up in the rewrite section of the editor tooltip when you select some text.\n\n**Language Specific Config:** To configure actions per language, just put the new actions under the particular language config block, e.g. for markdown, put `\"writeAssistAi.rewriteOptions\"` under `\"[markdown]\"` block.\n\n**Example Action Config:**\n```json\n[\n  {\n    \"title\": \"<command name/short title>\",\n    \"description\": \"<command description>\",\n    \"prompt\": \"<LLM prompt for the given command>\"\n  }\n]\n```"
         }
       }
     }
