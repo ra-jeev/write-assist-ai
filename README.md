@@ -88,6 +88,12 @@ To specify actions for a specific language, place the actions within the corresp
 
 ## 🚀 Release Notes
 
+### v0.4.1
+
+#### Added
+
+* GPT-4o model, and made it the default model
+
 ### v0.4.0
 
 #### Added
@@ -141,20 +147,6 @@ To specify actions for a specific language, place the actions within the corresp
 #### Added
 
 * Support for TeX/LaTeX files.
-
-### v0.0.10
-
-#### Fixed
-
-* The issue of failing API calls
-  
-#### Changed
-
-* The base OpenAI model from `text-davinci-003` to `gpt-3.5-turbo-instruct`
-
-#### Added
-
-* Better error messaging in case of API errors
 
 ## 📜 Changelog
 

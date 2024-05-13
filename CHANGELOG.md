@@ -6,6 +6,12 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 
 --
 
+## [v0.4.1] - 2024-05-14
+
+### Added
+
+* GPT-4o model, and made it the default model
+
 ## [v0.4.0] - 2024-05-07
 
 ### Added
