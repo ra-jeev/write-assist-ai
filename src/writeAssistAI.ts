@@ -33,12 +33,12 @@ export class WriteAssistAI implements CodeActionProvider {
     this.extensionConfig = config;
     this.prepareActionsFromConfig();
     this.extensionConfig.registerOpenAiConfigChangeListener(
-      (isApiKeyChange: boolean) => this.onOpenAiApiConfigChange(isApiKeyChange)
+      (resetOpenAiSvc: boolean) => this.onOpenAiApiConfigChange(resetOpenAiSvc)
     );
   }
 
-  onOpenAiApiConfigChange(apiKeyChanged: boolean) {
-    if (apiKeyChanged) {
+  onOpenAiApiConfigChange(resetSvc: boolean) {
+    if (resetSvc) {
       this.openAiSvc = undefined;
     } else if (this.openAiSvc) {
       this.openAiSvc.config = this.extensionConfig.getOpenAIConfig();
@@ -127,7 +127,8 @@ export class WriteAssistAI implements CodeActionProvider {
 
     this.openAiSvc = new OpenAiService(
       apiKey,
-      this.extensionConfig.getOpenAIConfig()
+      this.extensionConfig.getOpenAIConfig(),
+      this.extensionConfig.getOpenAiProxyUrl()
     );
 
     return this.openAiSvc;
