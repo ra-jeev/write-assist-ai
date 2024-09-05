@@ -12,9 +12,10 @@ export class OpenAiService {
   private readonly openAiSvc: OpenAI;
   private _config: OpenAiConfig;
 
-  constructor(apiKey: string, config: OpenAiConfig) {
+  constructor(apiKey: string, config: OpenAiConfig, proxyUrl?: string) {
     this.openAiSvc = new OpenAI({
       apiKey,
+      baseURL: proxyUrl || undefined,
     });
 
     this._config = config;
