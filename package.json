@@ -91,10 +91,15 @@
           "order": 3,
           "markdownDescription": "The custom OpenAI model to use (used only when '#writeAssistAi.openAi.model#' is set to `custom`).\n\nIf no value is provided then the default configured model will be used instead."
         },
+        "writeAssistAi.openAi.proxyUrl": {
+          "type": "string",
+          "order": 4,
+          "markdownDescription": "Proxy server URL (if any). No validation is done on the URL.\n\nUse a fully qualified URL along with the port e.g. `http://localhost:8080`"
+        },
         "writeAssistAi.systemPrompt": {
           "type": "string",
           "default": "You are a helpful assistant. Your job is to perform the tasks related to rewriting text inputs given by the user. If the input text contains any special syntax then strictly follow that syntax, e.g. for markdown return markdown, for latex return latex etc. Do not return markdown for latex, and vice versa.",
-          "order": 4,
+          "order": 5,
           "scope": "language-overridable",
           "editPresentation": "multilineText",
           "markdownDescription": "Set the system prompt to use for the API calls. The prompt specific to a performed action will be in addition to this system prompt.\n\n**Language Specific Config:** You can also different system prompts for different languages. To do that open your VS Code settings UI and type `@lang:<languageId> Write Assist AI` e.g. `@lang:markdown Write Assist AI` and set the System Prompt for the selected language."
