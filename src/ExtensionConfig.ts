@@ -33,6 +33,7 @@ export enum ConfigurationKeys {
   temperature = 'temperature',
   model = 'openAi.model',
   customModel = 'openAi.customModel',
+  proxyUrl = 'openAi.proxyUrl',
   quickFixes = 'quickFixes',
   rewriteOptions = 'rewriteOptions',
   systemPrompt = 'systemPrompt',
@@ -57,7 +58,7 @@ export class ExtensionConfig {
     config: ExtensionConfig
   ) => any;
   private openAiConfigChangeListener:
-    | ((isApiKeyChange: boolean) => any)
+    | ((resetOpenAiSvc: boolean) => any)
     | undefined;
 
   constructor(
@@ -199,6 +200,11 @@ export class ExtensionConfig {
     };
   }
 
+  getOpenAiProxyUrl(): string | undefined {
+    return this.getConfiguration<string>(ConfigurationKeys.proxyUrl, '')
+      .default;
+  }
+
   getActionsType(type: string): LanguageConfig<WritingAction[]> {
     const actionsCfg = this.getConfiguration<Omit<WritingAction, 'id'>[]>(
       type,
@@ -251,6 +257,17 @@ export class ExtensionConfig {
     }
 
     if (this.openAiConfigChangeListener) {
+      // if proxy url has changed then treat it as if apiKey itself
+      // has changed as we will re-init the openAIService
+      if (
+        event.affectsConfiguration(
+          `${ExtensionConfig.sectionKey}.${ConfigurationKeys.proxyUrl}`
+        )
+      ) {
+        this.openAiConfigChangeListener(true);
+        return;
+      }
+
       for (const configKey of configOpenAiKeys) {
         if (
           event.affectsConfiguration(
@@ -285,7 +302,7 @@ export class ExtensionConfig {
   }
 
   registerOpenAiConfigChangeListener(
-    listener: (isApiKeyChange: boolean) => any
+    listener: (resetOpenAiSvc: boolean) => any
   ) {
     this.openAiConfigChangeListener = listener;
     this.context.subscriptions.push(
