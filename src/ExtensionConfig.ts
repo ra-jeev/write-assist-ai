@@ -47,7 +47,7 @@ enum CommandKeys {
 
 const DEFAULT_MAX_TOKENS = 1200;
 const DEFAULT_TEMPERATURE = 0.3;
-const DEFAULT_OPENAI_MODEL = 'gpt-4';
+const DEFAULT_OPENAI_MODEL = 'gpt-4o';
 
 export class ExtensionConfig {
   public static readonly sectionKey = 'writeAssistAi';
