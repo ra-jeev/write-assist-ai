@@ -2,25 +2,24 @@ import { ExtensionContext, workspace, ConfigurationChangeEvent } from 'vscode';
 import { OpenAIConfigManager } from './OpenAIConfigManager';
 import { ActionsConfigManager } from './ActionsConfigManager';
 import { SecretsManager } from './SecretsManager';
-import { CommandKeys } from '../constants';
-import type { ExtensionActions, LanguageConfig, OpenAIConfig } from '../types';
+import { CONFIG_SECTION_KEY } from '../constants';
+import type {
+  CommandsChangeListener,
+  ExtensionActions,
+  LanguageConfig,
+  OpenAIConfig,
+} from '../types';
 
 export class ExtensionConfig {
-  public static readonly sectionKey = 'writeAssistAi';
-  public static readonly openAIApiKeyCmd = `${ExtensionConfig.sectionKey}.${CommandKeys.openAiApiKey}`;
-
   private openAIConfig: OpenAIConfigManager;
   private actionsConfig: ActionsConfigManager;
   private secretsManager: SecretsManager;
 
   constructor(
     private readonly context: ExtensionContext,
-    private readonly cmdKeysListener: (
-      ctx: ExtensionContext,
-      config: ExtensionConfig
-    ) => any
+    private readonly cmdsChangeListener: CommandsChangeListener
   ) {
-    this.secretsManager = new SecretsManager(context);
+    this.secretsManager = new SecretsManager(this.context);
     this.openAIConfig = new OpenAIConfigManager(this, this.secretsManager);
     this.actionsConfig = new ActionsConfigManager(this);
 
@@ -29,9 +28,7 @@ export class ExtensionConfig {
   }
 
   getConfiguration<T>(key: string, defaultValue: T): LanguageConfig<T> {
-    const workspaceConfig = workspace.getConfiguration(
-      ExtensionConfig.sectionKey
-    );
+    const workspaceConfig = workspace.getConfiguration(CONFIG_SECTION_KEY);
 
     const value: LanguageConfig<T> = {
       default: workspaceConfig.get<T>(key, defaultValue),
@@ -41,7 +38,7 @@ export class ExtensionConfig {
     if (inspectedValue?.languageIds) {
       for (const languageId of inspectedValue.languageIds) {
         value[languageId] = workspace
-          .getConfiguration(ExtensionConfig.sectionKey, { languageId })
+          .getConfiguration(CONFIG_SECTION_KEY, { languageId })
           .get(key) as T;
       }
     }
@@ -53,7 +50,7 @@ export class ExtensionConfig {
     try {
       // Update in global settings
       await workspace
-        .getConfiguration(ExtensionConfig.sectionKey)
+        .getConfiguration(CONFIG_SECTION_KEY)
         .update(key, value, true);
     } catch (error) {
       console.error(`No global configuration for ${key}`, error);
@@ -61,9 +58,7 @@ export class ExtensionConfig {
 
     try {
       // Update in workspace settings
-      await workspace
-        .getConfiguration(ExtensionConfig.sectionKey)
-        .update(key, value);
+      await workspace.getConfiguration(CONFIG_SECTION_KEY).update(key, value);
     } catch (error) {
       console.error(`No workspace configuration for ${key}`, error);
     }
@@ -103,7 +98,7 @@ export class ExtensionConfig {
 
   private onConfigurationChanged(event: ConfigurationChangeEvent) {
     if (this.actionsConfig.hasConfigChanged(event)) {
-      this.cmdKeysListener(this.context, this);
+      this.cmdsChangeListener();
     } else if (this.openAIConfig.hasConfigChanged(event)) {
       this.openAIConfig.notifyConfigChanged(event);
     }
