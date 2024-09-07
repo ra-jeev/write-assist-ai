@@ -22,4 +22,5 @@ export type OpenAIConfig = {
   systemPrompt: LanguageConfig<string>;
 };
 
+export type CommandsChangeListener = () => void;
 export type SecretChangeListener = (key: string) => void;

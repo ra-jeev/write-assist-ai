@@ -28,3 +28,6 @@ export enum ConfigurationKeys {
 export enum CommandKeys {
   openAiApiKey = 'openAiApiKey',
 }
+
+export const CONFIG_SECTION_KEY = 'writeAssistAi';
+export const OPEN_AI_API_KEY_CMD = `${CONFIG_SECTION_KEY}.${CommandKeys.openAiApiKey}`;

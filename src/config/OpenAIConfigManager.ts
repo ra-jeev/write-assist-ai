@@ -11,7 +11,7 @@ import {
 import type { OpenAIConfig } from '../types';
 
 export class OpenAIConfigManager {
-  private changeListener: ((resetOpenAiSvc: boolean) => any) | undefined;
+  private changeListener: ((resetOpenAISvc: boolean) => any) | undefined;
 
   constructor(
     private readonly config: ExtensionConfig,

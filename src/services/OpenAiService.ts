@@ -1,18 +1,12 @@
 import { OpenAI, APIError } from 'openai';
-import { LanguageConfig } from '../ExtensionConfig';
+import type { OpenAIConfig } from '../types';
+import { ERROR_MESSAGES } from '../constants';
 
-export type OpenAiConfig = {
-  model: string;
-  maxTokens: number;
-  temperature: number;
-  systemPrompt: LanguageConfig<string>;
-};
-
-export class OpenAiService {
+export class OpenAIService {
   private readonly openAiSvc: OpenAI;
-  private _config: OpenAiConfig;
+  private _config: OpenAIConfig;
 
-  constructor(apiKey: string, config: OpenAiConfig, proxyUrl?: string) {
+  constructor(apiKey: string, config: OpenAIConfig, proxyUrl?: string) {
     this.openAiSvc = new OpenAI({
       apiKey,
       baseURL: proxyUrl || undefined,
@@ -21,7 +15,7 @@ export class OpenAiService {
     this._config = config;
   }
 
-  set config(config: OpenAiConfig) {
+  set config(config: OpenAIConfig) {
     this._config = config;
   }
 
@@ -64,22 +58,22 @@ export class OpenAiService {
       });
       /* eslint-enable @typescript-eslint/naming-convention */
 
-      let finalContent = 'Warning: No choices returned by the API.';
+      let finalContent = ERROR_MESSAGES.NO_CHOICES_RETURNED;
       if (response.choices.length) {
-        finalContent = response.choices[0].message.content
-          ? response.choices[0].message.content.trim()
-          : 'Warning: Empty content received from the API.';
+        finalContent =
+          response.choices[0].message.content?.trim() ||
+          ERROR_MESSAGES.EMPTY_CONTENT;
       }
 
       return finalContent;
     } catch (error) {
-      let errMessage = '';
+      let errMessage = ERROR_MESSAGES.FAILED_TO_PROCESS;
       if (error instanceof APIError) {
         errMessage = `${error.name}: ${error.type}: ${
           error.code ? error.code + ': ' + error.message : error.message
         }`;
-      } else {
-        errMessage = `Error: ${(error as any).message ?? 'Failed to process'}`;
+      } else if (error instanceof Error) {
+        errMessage = `Error: ${error.message}`;
       }
 
       throw new Error(errMessage);
