@@ -9,12 +9,10 @@ import {
   window,
 } from 'vscode';
 
-import { OpenAiService } from './services/OpenAiService';
-import {
-  ExtensionConfig,
-  type LanguageConfig,
-  type WritingAction,
-} from './ExtensionConfig';
+import { AIServiceFactory } from './services/AIServiceFactory';
+import { ExtensionConfig } from './config/ExtensionConfig';
+import { CONFIG_SECTION_KEY } from './constants';
+import type { LanguageConfig, WritingAction } from './types';
 
 export class WriteAssistAI implements CodeActionProvider {
   public static readonly providedCodeActionKinds = [
@@ -22,31 +20,20 @@ export class WriteAssistAI implements CodeActionProvider {
     CodeActionKind.QuickFix,
   ];
 
-  private openAiSvc: OpenAiService | undefined;
   private allCommands: string[] = [];
   private actions: LanguageConfig<CodeAction[]> = { default: [] };
   private currRange: Range | undefined;
-  private extensionConfig: ExtensionConfig;
   private currentlyProcessing = false;
 
-  constructor(config: ExtensionConfig) {
-    this.extensionConfig = config;
+  constructor(
+    private readonly config: ExtensionConfig,
+    private readonly aiServiceFactory: AIServiceFactory
+  ) {
     this.prepareActionsFromConfig();
-    this.extensionConfig.registerOpenAiConfigChangeListener(
-      (resetOpenAiSvc: boolean) => this.onOpenAiApiConfigChange(resetOpenAiSvc)
-    );
-  }
-
-  onOpenAiApiConfigChange(resetSvc: boolean) {
-    if (resetSvc) {
-      this.openAiSvc = undefined;
-    } else if (this.openAiSvc) {
-      this.openAiSvc.config = this.extensionConfig.getOpenAIConfig();
-    }
   }
 
   prepareActionsFromConfig() {
-    const actionsFromConfig = this.extensionConfig.getActions();
+    const actionsFromConfig = this.config.getActions();
     this.prepareActionKind(
       actionsFromConfig.rewriteActions,
       CodeActionKind.RefactorRewrite
@@ -102,36 +89,13 @@ export class WriteAssistAI implements CodeActionProvider {
   ): CodeAction {
     const action = new CodeAction(writingAction.title, actionKind);
     action.command = {
-      command: `${ExtensionConfig.sectionKey}.${writingAction.id}`,
+      command: `${CONFIG_SECTION_KEY}.${writingAction.id}`,
       title: writingAction.title,
       tooltip: writingAction.description,
       arguments: [writingAction.prompt],
     };
 
     return action;
-  }
-
-  async createOpenAiSvc(): Promise<OpenAiService | undefined> {
-    if (this.openAiSvc) {
-      return this.openAiSvc;
-    }
-
-    let apiKey = await this.extensionConfig.getOpenAiApiKey();
-    if (!apiKey) {
-      apiKey = await this.extensionConfig.promptUserForApiKey();
-
-      if (!apiKey) {
-        return;
-      }
-    }
-
-    this.openAiSvc = new OpenAiService(
-      apiKey,
-      this.extensionConfig.getOpenAIConfig(),
-      this.extensionConfig.getOpenAiProxyUrl()
-    );
-
-    return this.openAiSvc;
   }
 
   async insertText(location: Position, text: string) {
@@ -183,8 +147,10 @@ export class WriteAssistAI implements CodeActionProvider {
 
     this.currentlyProcessing = true;
     const currRangeEnd = this.currRange.end;
-    const openAiSvc = await this.createOpenAiSvc();
-    if (!openAiSvc) {
+    let openAIService;
+    try {
+      openAIService = await this.aiServiceFactory.getService();
+    } catch (error) {
       await this.insertText(
         currRangeEnd,
         'Error: No API Key entered in the config input box above.\nPlease retry the selection and set the key.'
@@ -200,13 +166,16 @@ export class WriteAssistAI implements CodeActionProvider {
       selection = await this.insertText(currRangeEnd, 'Thinking...');
 
       const text = editor.document.getText(this.currRange);
-      message = await openAiSvc.createChatCompletion(
+      message = await openAIService.createChatCompletion(
         prompt,
         text,
         editor.document.languageId
       );
     } catch (error) {
-      message = (error as any).message ?? 'Error: Failed to process';
+      message = 'Error: Failed to process';
+      if (error instanceof Error) {
+        message = error.message;
+      }
     }
 
     if (selection) {
