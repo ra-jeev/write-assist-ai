@@ -68,7 +68,7 @@ export class WriteAssistAI implements CodeActionProvider {
     document: TextDocument,
     range: Range
   ): CodeAction[] | undefined {
-    // If nothing is selected, or if already some processing is
+    // If nothing is selected, or if already the previous action is
     // under progress, then we won't provide any action
     if (range.isEmpty || this.currentlyProcessing) {
       return;
@@ -156,6 +156,8 @@ export class WriteAssistAI implements CodeActionProvider {
         'Error: No API Key entered in the config input box above.\nPlease retry the selection and set the key.'
       );
 
+      this.currentlyProcessing = false;
+      this.currRange = undefined;
       return;
     }
 

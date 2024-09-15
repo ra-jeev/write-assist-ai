@@ -48,7 +48,6 @@ export class OpenAIService {
       }${text}`;
       messages.push({ role: 'user', content: userPrompt });
 
-      /* eslint-disable @typescript-eslint/naming-convention */
       const response = await this.openAiSvc.chat.completions.create({
         model: this._config.model,
         messages,
@@ -56,7 +55,6 @@ export class OpenAIService {
         max_tokens: this._config.maxTokens,
         n: 1,
       });
-      /* eslint-enable @typescript-eslint/naming-convention */
 
       let finalContent = ERROR_MESSAGES.NO_CHOICES_RETURNED;
       if (response.choices.length) {
