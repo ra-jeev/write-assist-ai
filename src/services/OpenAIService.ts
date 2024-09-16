@@ -9,7 +9,7 @@ export class OpenAIService {
   constructor(apiKey: string, config: OpenAIConfig, proxyUrl?: string) {
     this.openAiSvc = new OpenAI({
       apiKey,
-      baseURL: proxyUrl || undefined,
+      baseURL: proxyUrl,
     });
 
     this._config = config;

@@ -2,7 +2,8 @@ import { ExtensionContext, workspace, ConfigurationChangeEvent } from 'vscode';
 import { OpenAIConfigManager } from './OpenAIConfigManager';
 import { ActionsConfigManager } from './ActionsConfigManager';
 import { SecretsManager } from './SecretsManager';
-import { CONFIG_SECTION_KEY } from '../constants';
+import { isConfigChanged } from './ConfigUtils';
+import { CONFIG_SECTION_KEY, ConfigurationKeys } from '../constants';
 import type {
   CommandsChangeListener,
   ExtensionActions,
@@ -14,6 +15,7 @@ export class ExtensionConfig {
   private openAIConfig: OpenAIConfigManager;
   private actionsConfig: ActionsConfigManager;
   private secretsManager: SecretsManager;
+  private separator = '';
 
   constructor(
     private readonly context: ExtensionContext,
@@ -25,6 +27,15 @@ export class ExtensionConfig {
 
     this.registerConfigChangeListener();
     this.openAIConfig.migrateApiKey();
+
+    this.initSeparator();
+  }
+
+  private initSeparator() {
+    this.separator = this.getConfiguration(
+      ConfigurationKeys.separator,
+      ''
+    ).default;
   }
 
   getConfiguration<T>(key: string, defaultValue: T): LanguageConfig<T> {
@@ -72,6 +83,10 @@ export class ExtensionConfig {
     return this.openAIConfig.getProxyUrl();
   }
 
+  getSeparator(): string {
+    return this.separator;
+  }
+
   getActions(): ExtensionActions {
     return this.actionsConfig.getActions();
   }
@@ -101,6 +116,8 @@ export class ExtensionConfig {
       this.cmdsChangeListener();
     } else if (this.openAIConfig.hasConfigChanged(event)) {
       this.openAIConfig.notifyConfigChanged(event);
+    } else if (isConfigChanged(event, ConfigurationKeys.separator)) {
+      this.initSeparator();
     }
   }
 }

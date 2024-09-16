@@ -21,6 +21,7 @@ export enum ConfigurationKeys {
   quickFixes = 'quickFixes',
   rewriteOptions = 'rewriteOptions',
   systemPrompt = 'systemPrompt',
+  separator = 'separatorText',
 }
 
 // Keys for the VSCode Command Pallette Commands

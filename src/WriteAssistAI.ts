@@ -104,16 +104,19 @@ export class WriteAssistAI implements CodeActionProvider {
       return;
     }
 
+    const separator = this.config.getSeparator();
     const response = await editor.edit((editBuilder) => {
       editBuilder.insert(
         location,
-        `\n\n${'*'.repeat(50)}\n${text}\n${'*'.repeat(50)}\n`
+        `\n\n${separator ? separator + '\n' : ''}${text}${
+          separator ? '\n' + separator : ''
+        }\n`
       );
     });
 
     if (response) {
       const lines = text.split('\n');
-      const startingLineNo = location.line + 3; // We're adding the text 3 lines below
+      const startingLineNo = location.line + (separator ? 3 : 2); // We're adding the text 3 lines below if separator, else 2 line
       const endingLineNo = startingLineNo + lines.length - 1;
       editor.selection = new Selection(
         startingLineNo,
@@ -124,8 +127,6 @@ export class WriteAssistAI implements CodeActionProvider {
 
       return editor.selection;
     }
-
-    return;
   }
 
   async replaceText(location: Selection, text: string) {
