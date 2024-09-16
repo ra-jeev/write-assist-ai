@@ -6,11 +6,23 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 
 --
 
+## [v0.5.0] - 2024-09-16
+
+### Added
+
+* Option to set a `proxyURL` (`baseURL`) to the OpenAI calls
+* `gpt-4o-mini` model to the selection dropdown
+* Option to set/remove the separator text around AI response
+
+### Fixed
+
+* `CodeActions` stopped showing if user didn't enter the API Key
+
 ## [v0.4.1] - 2024-05-14
 
 ### Added
 
-* GPT-4o model, and made it the default model
+* `gpt-4o` model, and made it the default model
 
 ## [v0.4.0] - 2024-05-07
 
