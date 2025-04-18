@@ -26,6 +26,7 @@
     "openai",
     "latex",
     "text",
+    "quarto",
     "chatgpt",
     "rewrite",
     "rewriting"
@@ -40,7 +41,8 @@
     "onLanguage:plaintext",
     "onLanguage:latex",
     "onLanguage:tex",
-    "onLanguage:bibtex"
+    "onLanguage:bibtex",
+    "onLanguage:quarto"
   ],
   "main": "./dist/extension.js",
   "contributes": {

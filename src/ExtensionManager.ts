@@ -34,7 +34,7 @@ export class ExtensionManager {
     );
 
     const aiActionProvider = languages.registerCodeActionsProvider(
-      ['markdown', 'plaintext', 'tex', 'latex', 'bibtex'],
+      ['markdown', 'plaintext', 'tex', 'latex', 'bibtex', 'quarto'],
       writeAssist,
       {
         providedCodeActionKinds: WriteAssistAI.providedCodeActionKinds,
