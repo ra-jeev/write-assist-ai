@@ -100,6 +100,16 @@ To specify actions for a specific language, place the actions within the corresp
 
 ## 🚀 Release Notes
 
+### v0.5.1
+
+#### Fixed
+
+* Added explicit support for Quarto files (The official Quarto extension registers a new languageId, so this extension stopped working with it).
+
+#### Changed
+
+* Moved from Webpack to esbuild for building the extension
+
 ### v0.5.0
 
 #### Added

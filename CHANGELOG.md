@@ -6,6 +6,17 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 
 --
 
+## [v0.5.1] - 2025-04-18
+
+### Fixed
+
+* Added explicit support for Quarto files (The official Quarto extension registers a new languageId, so this extension stopped working with it).
+
+### Changed
+
+* Moved from Webpack to esbuild for building the extension
+
+
 ## [v0.5.0] - 2024-09-16
 
 ### Added
