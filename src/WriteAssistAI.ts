@@ -22,7 +22,6 @@ export class WriteAssistAI implements CodeActionProvider {
 
   private allCommands: string[] = [];
   private actions: LanguageConfig<CodeAction[]> = { default: [] };
-  private currRange: Range | undefined;
   private currentlyProcessing = false;
 
   constructor(
@@ -32,8 +31,13 @@ export class WriteAssistAI implements CodeActionProvider {
     this.prepareActionsFromConfig();
   }
 
+  get commands(): string[] {
+    return this.allCommands;
+  }
+
   prepareActionsFromConfig() {
     const actionsFromConfig = this.config.getActions();
+
     this.prepareActionKind(
       actionsFromConfig.rewriteActions,
       CodeActionKind.RefactorRewrite
@@ -64,25 +68,6 @@ export class WriteAssistAI implements CodeActionProvider {
     }
   }
 
-  provideCodeActions(
-    document: TextDocument,
-    range: Range
-  ): CodeAction[] | undefined {
-    // If nothing is selected, or if already the previous action is
-    // under progress, then we won't provide any action
-    if (range.isEmpty || this.currentlyProcessing) {
-      return;
-    }
-
-    this.currRange = range;
-
-    return this.actions[document.languageId] ?? this.actions.default;
-  }
-
-  get commands(): string[] {
-    return this.allCommands;
-  }
-
   createAction(
     writingAction: WritingAction,
     actionKind: CodeActionKind
@@ -98,6 +83,27 @@ export class WriteAssistAI implements CodeActionProvider {
     return action;
   }
 
+  provideCodeActions(
+    document: TextDocument,
+    range: Range
+  ): CodeAction[] | undefined {
+    // If nothing is selected, or if the previous action is
+    // already under progress, then don't provide any action
+    if (range.isEmpty || this.currentlyProcessing) {
+      return;
+    }
+
+    const actions = this.actions[document.languageId] ?? this.actions.default;
+
+    actions.forEach((action) => {
+      if (action.command?.arguments?.length) {
+        action.command.arguments = [action.command.arguments[0], document, range];
+      }
+    });
+
+    return actions;
+  }
+
   async insertText(location: Position, text: string) {
     const editor = window.activeTextEditor;
     if (!editor) {
@@ -108,9 +114,7 @@ export class WriteAssistAI implements CodeActionProvider {
     const response = await editor.edit((editBuilder) => {
       editBuilder.insert(
         location,
-        `\n\n${separator ? separator + '\n' : ''}${text}${
-          separator ? '\n' + separator : ''
-        }\n`
+        `\n\n${separator ? separator + '\n' : ''}${text}${separator ? '\n' + separator : ''}\n`
       );
     });
 
@@ -140,14 +144,14 @@ export class WriteAssistAI implements CodeActionProvider {
     });
   }
 
-  async handleAction(prompt: string) {
+  async handleAction(prompt: string, document: TextDocument, range: Range) {
     const editor = window.activeTextEditor;
-    if (!this.currRange || !editor) {
+    if (!editor || editor.document.uri.toString() !== document.uri.toString()) {
       return;
     }
 
     this.currentlyProcessing = true;
-    const currRangeEnd = this.currRange.end;
+    const currRangeEnd = range.end;
     let openAIService;
     try {
       openAIService = await this.aiServiceFactory.getService();
@@ -158,7 +162,7 @@ export class WriteAssistAI implements CodeActionProvider {
       );
 
       this.currentlyProcessing = false;
-      this.currRange = undefined;
+
       return;
     }
 
@@ -168,11 +172,11 @@ export class WriteAssistAI implements CodeActionProvider {
     try {
       selection = await this.insertText(currRangeEnd, 'Thinking...');
 
-      const text = editor.document.getText(this.currRange);
+      const text = document.getText(range);
       message = await openAIService.createChatCompletion(
         prompt,
         text,
-        editor.document.languageId
+        document.languageId
       );
     } catch (error) {
       message = 'Error: Failed to process';
@@ -188,6 +192,5 @@ export class WriteAssistAI implements CodeActionProvider {
     }
 
     this.currentlyProcessing = false;
-    this.currRange = undefined;
   }
 }

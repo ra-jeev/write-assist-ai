@@ -1,4 +1,4 @@
-import { commands, ExtensionContext, languages } from 'vscode';
+import { commands, ExtensionContext, languages, Range, TextDocument } from 'vscode';
 import { ExtensionConfig } from './config/ExtensionConfig';
 import { AIServiceFactory } from './services/AIServiceFactory';
 import { WriteAssistAI } from './WriteAssistAI';
@@ -13,6 +13,7 @@ export class ExtensionManager {
       context,
       this.handleCommandsConfigChange.bind(this)
     );
+
     this.aiServiceFactory = new AIServiceFactory(this.config);
     this.registerCommandsAndActions();
   }
@@ -27,28 +28,44 @@ export class ExtensionManager {
     this.registerCommandsAndActions();
   }
 
+  private registerCodeActionsProviderAndCmds(actionsProvider: WriteAssistAI, supportedLanguages: string[], supportedCommands: string[]) {
+    // Register the code action provider for supported languages
+    const provider = languages.registerCodeActionsProvider(
+      supportedLanguages,
+      actionsProvider,
+      {
+        providedCodeActionKinds: WriteAssistAI.providedCodeActionKinds,
+      }
+    );
+
+    this.context.subscriptions.push(provider);
+
+    // Register all the commands for the code actions
+    for (const command of supportedCommands) {
+      this.context.subscriptions.push(
+        commands.registerCommand(command, (...args: [string, TextDocument, Range]) => {
+          actionsProvider.handleAction(...args);
+        })
+      );
+    }
+  }
+
   private registerCommandsAndActions() {
     const writeAssist: WriteAssistAI = new WriteAssistAI(
       this.config,
       this.aiServiceFactory
     );
 
-    const aiActionProvider = languages.registerCodeActionsProvider(
-      ['markdown', 'plaintext', 'tex', 'latex', 'bibtex', 'quarto'],
-      writeAssist,
-      {
-        providedCodeActionKinds: WriteAssistAI.providedCodeActionKinds,
-      }
-    );
+    const supportedLanguages = [
+      'markdown',
+      'plaintext',
+      'tex',
+      'latex',
+      'bibtex',
+      'quarto',
+    ];
 
-    this.context.subscriptions.push(aiActionProvider);
-    for (const command of writeAssist.commands) {
-      this.context.subscriptions.push(
-        commands.registerCommand(command, (args) => {
-          writeAssist.handleAction(args);
-        })
-      );
-    }
+    this.registerCodeActionsProviderAndCmds(writeAssist, supportedLanguages, writeAssist.commands);
 
     // Add the command for OpenAI API Key configuration
     this.context.subscriptions.push(
