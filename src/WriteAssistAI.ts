@@ -4,9 +4,11 @@ import {
   CodeActionProvider,
   Position,
   Range,
-  Selection,
   TextDocument,
+  Uri,
   window,
+  workspace,
+  WorkspaceEdit,
 } from 'vscode';
 
 import { AIServiceFactory } from './services/AIServiceFactory';
@@ -104,60 +106,53 @@ export class WriteAssistAI implements CodeActionProvider {
     return actions;
   }
 
-  async insertText(location: Position, text: string) {
-    const editor = window.activeTextEditor;
-    if (!editor) {
-      return;
-    }
-
-    const separator = this.config.getSeparator();
-    const response = await editor.edit((editBuilder) => {
-      editBuilder.insert(
-        location,
-        `\n\n${separator ? separator + '\n' : ''}${text}${separator ? '\n' + separator : ''}\n`
-      );
-    });
-
-    if (response) {
-      const lines = text.split('\n');
-      const startingLineNo = location.line + (separator ? 3 : 2); // We're adding the text 3 lines below if separator, else 2 line
-      const endingLineNo = startingLineNo + lines.length - 1;
-      editor.selection = new Selection(
-        startingLineNo,
-        0,
-        endingLineNo,
-        lines[lines.length - 1].length
-      );
-
-      return editor.selection;
-    }
-  }
-
-  async replaceText(location: Selection, text: string) {
-    const editor = window.activeTextEditor;
-    if (!editor) {
-      return;
-    }
-
-    return await editor.edit((editBuilder) => {
-      editBuilder.replace(location, text);
-    });
-  }
-
-  async handleAction(prompt: string, document: TextDocument, range: Range) {
+  getEditorIfValid(document: TextDocument) {
     const editor = window.activeTextEditor;
     if (!editor || editor.document.uri.toString() !== document.uri.toString()) {
       return;
     }
 
+    return editor;
+  }
+
+  async insertText(document: TextDocument, location: Position, text: string) {
+    const separator = this.config.getSeparator();
+    let textWithSeparator = ['\n', text];
+    if (separator) {
+      textWithSeparator.splice(1, 0, separator);
+      textWithSeparator.push(separator, '');
+    }
+
+    const edit = new WorkspaceEdit();
+    edit.insert(Uri.parse(document.uri.toString()), location, textWithSeparator.join('\n'));
+
+    const response = await workspace.applyEdit(edit);
+    if (response) {
+      const lines = text.split('\n');
+      // We're inserting the text 3 lines below the location if separator exists, else 2 lines
+      const startLine = location.line + (separator ? 3 : 2);
+      const endLine = startLine + lines.length - 1;
+
+      return new Range(new Position(startLine, 0), new Position(endLine, lines[lines.length - 1].length));
+    }
+  }
+
+  async replaceText(document: TextDocument, range: Range, text: string) {
+    const edit = new WorkspaceEdit();
+    edit.replace(Uri.parse(document.uri.toString()), range, text);
+
+    return await workspace.applyEdit(edit);
+  }
+
+  async handleAction(prompt: string, document: TextDocument, range: Range) {
     this.currentlyProcessing = true;
-    const currRangeEnd = range.end;
     let openAIService;
     try {
       openAIService = await this.aiServiceFactory.getService();
     } catch (error) {
       await this.insertText(
-        currRangeEnd,
+        document,
+        range.end,
         'Error: No API Key entered in the config input box above.\nPlease retry the selection and set the key.'
       );
 
@@ -166,11 +161,11 @@ export class WriteAssistAI implements CodeActionProvider {
       return;
     }
 
-    let selection: Selection | undefined;
+    let newRange: Range | undefined;
     let message = '';
 
     try {
-      selection = await this.insertText(currRangeEnd, 'Thinking...');
+      newRange = await this.insertText(document, range.end, 'Thinking...');
 
       const text = document.getText(range);
       message = await openAIService.createChatCompletion(
@@ -185,10 +180,8 @@ export class WriteAssistAI implements CodeActionProvider {
       }
     }
 
-    if (selection) {
-      await this.replaceText(selection, message);
-    } else {
-      await this.insertText(currRangeEnd, message);
+    if (newRange) {
+      await this.replaceText(document, newRange, message);
     }
 
     this.currentlyProcessing = false;
