@@ -4,12 +4,14 @@ import {
   CodeActionProvider,
   CodeLens,
   CodeLensProvider,
+  DecorationRenderOptions,
   EventEmitter,
   Position,
   ProgressLocation,
   Range,
   Selection,
   TextDocument,
+  TextEditor,
   TextEditorDecorationType,
   Uri,
   window,
@@ -22,14 +24,19 @@ import { ExtensionConfig } from './config/ExtensionConfig';
 import { ACCEPT_REPHRASE_CMD, CONFIG_SECTION_KEY, REJECT_REPHRASE_CMD } from './constants';
 import type { LanguageConfig, WritingAction } from './types';
 
+type DecorationWithRange = {
+  range: Range;
+  decoration: TextEditorDecorationType;
+}
+
+type RephraseTask = {
+  document: TextDocument;
+  original?: DecorationWithRange;
+  rephrased?: DecorationWithRange;
+}
+
 export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
-  private activeRephrase: {
-    document: TextDocument,
-    originalRange: Range,
-    rephrasedRange: Range | null,
-    originalDecoration: TextEditorDecorationType,
-    rephrasedDecoration: TextEditorDecorationType | null
-  } | null = null;
+  activeRephrase: RephraseTask | null = null;
 
   private codeLensEventEmitter = new EventEmitter<void>();
   public onDidChangeCodeLenses = this.codeLensEventEmitter.event;
@@ -132,12 +139,22 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     return editor;
   }
 
-  async insertText(document: TextDocument, location: Position, text: string) {
-    const separator = this.config.getSeparator();
-    let textWithSeparator = ['\n', text];
-    if (separator) {
-      textWithSeparator.splice(1, 0, separator);
-      textWithSeparator.push(separator, '');
+  async insertText(document: TextDocument, location: Position, text: string, addSeparator = true) {
+    let textWithSeparator = ['', text];
+    let newLinesAdded = 1;
+
+    if (addSeparator) {
+      textWithSeparator[0] = '\n';
+      newLinesAdded++;
+
+      const separator = this.config.getSeparator();
+      if (separator) {
+        textWithSeparator.splice(1, 0, separator);
+        textWithSeparator.push(separator);
+        newLinesAdded++;
+      }
+
+      textWithSeparator.push(''); // Add an empty line at the end
     }
 
     const edit = new WorkspaceEdit();
@@ -146,8 +163,8 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     const response = await workspace.applyEdit(edit);
     if (response) {
       const lines = text.split('\n');
-      // We're inserting the text 3 lines below the location if separator exists, else 2 lines
-      const startLine = location.line + (separator ? 3 : 2);
+
+      const startLine = location.line + newLinesAdded;
       const endLine = startLine + lines.length - 1;
 
       return new Range(new Position(startLine, 0), new Position(endLine, lines[lines.length - 1].length));
@@ -159,6 +176,32 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     edit.replace(Uri.parse(document.uri.toString()), range, text);
 
     return await workspace.applyEdit(edit);
+  }
+
+  async deleteRange(document: TextDocument, range: Range) {
+    const edit = new WorkspaceEdit();
+    edit.delete(Uri.parse(document.uri.toString()), range);
+
+    return await workspace.applyEdit(edit);
+  }
+
+  applyDecorations(
+    editor: TextEditor,
+    decorations: { type: 'original' | 'rephrased', range: Range, decorationOptions: DecorationRenderOptions }[]
+  ) {
+    this.activeRephrase = {
+      document: editor.document,
+    };
+
+    for (const { type, range, decorationOptions } of decorations) {
+      const decorationType = window.createTextEditorDecorationType(decorationOptions);
+      this.activeRephrase[type] = {
+        range,
+        decoration: decorationType,
+      };
+
+      editor.setDecorations(decorationType, [range]);
+    }
   }
 
   async handleAction(prompt: string, document: TextDocument, range: Range) {
@@ -200,30 +243,6 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     // if (newRange) {
     //   await this.replaceText(document, newRange, message);
     // }
-    const originalText = document.getText(range);
-
-    // Create decoration for original text
-    const originalDecoration = window.createTextEditorDecorationType({
-      backgroundColor: 'rgba(255, 182, 193, 0.2)',
-      border: '1px solid red',
-      isWholeLine: true,
-    });
-
-    let editor = this.getEditorIfValid(document);
-    if (editor) {
-      editor.selection = new Selection(range.end, range.end);
-      // Apply the original decoration
-      editor.setDecorations(originalDecoration, [range]);
-    }
-
-    // Store the active rephrase with partial data (no rephrased text yet)
-    this.activeRephrase = {
-      document,
-      originalRange: range,
-      rephrasedRange: null,
-      originalDecoration,
-      rephrasedDecoration: null
-    };
 
     // Show loading indicator while getting rephrased text
     await window.withProgress({
@@ -240,6 +259,7 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
       progress.report({ increment: 30 });
 
       try {
+        const originalText = document.getText(range);
         const rephrasedText = await openAIService.createChatCompletion(
           prompt,
           originalText,
@@ -248,42 +268,38 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
 
         progress.report({ increment: 70 });
 
-        // Make sure the document and editor are still valid
-        editor = this.getEditorIfValid(document);
-        if (!this.activeRephrase || !editor) {
-          return;
+        const editor = this.getEditorIfValid(document);
+        if (editor) {
+          // Remove the existing selection
+          editor.selection = new Selection(range.end, range.end);
+
+          const rephrasedRange = await this.insertText(document, range.end, rephrasedText, false);
+          if (rephrasedRange) {
+            this.applyDecorations(editor, [
+              {
+                type: 'original',
+                range,
+                decorationOptions: {
+                  backgroundColor: 'rgba(255, 182, 193, 0.2)',
+                  border: '1px solid red',
+                  isWholeLine: true,
+                },
+              },
+              {
+                type: 'rephrased',
+                range: rephrasedRange,
+                decorationOptions: {
+                  backgroundColor: 'rgba(144, 255, 144, 0.2)',
+                  border: '1px solid green',
+                  isWholeLine: true,
+                },
+              }
+            ]);
+
+            // Trigger codelens refresh to show buttons
+            this.codeLensEventEmitter.fire();
+          }
         }
-
-        // Insert the rephrased text with edits
-        const edit = new WorkspaceEdit();
-        edit.insert(document.uri, range.end, `\n\n${rephrasedText}\n`);
-        await workspace.applyEdit(edit);
-
-        // Calculate the range of the inserted text
-        const startPos = new Position(range.end.line + 2, 0);
-        const lines = rephrasedText.split('\n');
-        const endLine = range.end.line + 2 + lines.length - 1;
-        const endChar = lines[lines.length - 1].length;
-        const endPos = new Position(endLine, endChar);
-        const rephrasedRange = new Range(startPos, endPos);
-
-        // Apply decoration to the rephrased text
-        const rephrasedDecoration = window.createTextEditorDecorationType({
-          backgroundColor: 'rgba(144, 255, 144, 0.2)',
-          border: '1px solid green',
-          isWholeLine: true,
-        });
-
-        editor.setDecorations(rephrasedDecoration, [rephrasedRange]);
-
-        // Update the active rephrase with rephrased text info
-        if (this.activeRephrase) {
-          this.activeRephrase.rephrasedRange = rephrasedRange;
-          this.activeRephrase.rephrasedDecoration = rephrasedDecoration;
-        }
-
-        // Trigger codelens refresh to show buttons
-        this.codeLensEventEmitter.fire();
       } catch (error) {
         window.showErrorMessage(`Error generating rephrased text: ${error}`);
         await this.cleanupRephrase();
@@ -296,17 +312,19 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
   provideCodeLenses(document: TextDocument): CodeLens[] {
     const codeLenses: CodeLens[] = [];
 
+
     // Only provide codelenses if there's an active rephrase for this document
     if (!this.activeRephrase ||
       this.activeRephrase.document.uri.toString() !== document.uri.toString() ||
-      !this.activeRephrase.rephrasedRange) {
+      !this.activeRephrase.original || !this.activeRephrase.rephrased) {
       return codeLenses;
     }
 
-    // Create a range for the codelens (between original and rephrased)
+
+    // Create a range for the codelens (just after the rephrased text)
     const lensRange = new Range(
-      this.activeRephrase.originalRange.end.line + 1, 0,
-      this.activeRephrase.originalRange.end.line + 1, 0
+      this.activeRephrase.rephrased.range.end.line + 1, 0,
+      this.activeRephrase.rephrased.range.end.line + 1, 0
     );
 
     // Accept button
@@ -334,31 +352,13 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
 
   // Accept the rephrased text (keep it, delete original)
   async acceptRephrase() {
-    if (!this.activeRephrase || !this.activeRephrase.rephrasedRange) {
+    if (!this.activeRephrase || !this.activeRephrase.original || !this.activeRephrase.rephrased) {
       return;
     }
 
     try {
-      // Get the rephrased text
-      const document = this.activeRephrase.document;
-      const rephrasedText = document.getText(this.activeRephrase.rephrasedRange);
-
       // Delete the original text
-      const edit = new WorkspaceEdit();
-      edit.replace(document.uri, this.activeRephrase.originalRange, rephrasedText);
-      await workspace.applyEdit(edit);
-
-      // Clean up the inserted rephrased text and newlines
-      const cleanEdit = new WorkspaceEdit();
-      const cleanRange = new Range(
-        this.activeRephrase.originalRange.end,
-        new Position(
-          this.activeRephrase.rephrasedRange.end.line + 1,
-          0
-        )
-      );
-      cleanEdit.delete(document.uri, cleanRange);
-      await workspace.applyEdit(cleanEdit);
+      await this.deleteRange(this.activeRephrase.document, this.activeRephrase.original.range);
 
       // Clean up any decorations
       await this.cleanupRephrase();
@@ -370,23 +370,13 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
 
   // Reject the rephrased text (delete it, keep original)
   async rejectRephrase() {
-    if (!this.activeRephrase || !this.activeRephrase.rephrasedRange) {
+    if (!this.activeRephrase || !this.activeRephrase.original || !this.activeRephrase.rephrased) {
       return;
     }
 
     try {
       // Delete the rephrased text and newlines
-      const document = this.activeRephrase.document;
-      const edit = new WorkspaceEdit();
-
-      // Delete from the line after original to the line after rephrased
-      const deleteRange = new Range(
-        new Position(this.activeRephrase.originalRange.end.line + 1, 0),
-        new Position(this.activeRephrase.rephrasedRange.end.line + 1, 0)
-      );
-
-      edit.delete(document.uri, deleteRange);
-      await workspace.applyEdit(edit);
+      await this.deleteRange(this.activeRephrase.document, this.activeRephrase.rephrased.range);
 
       // Clean up decorations
       await this.cleanupRephrase();
@@ -398,18 +388,13 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
 
   // Clean up decorations and stored data
   private async cleanupRephrase() {
-    if (!this.activeRephrase) {
+    if (!this.activeRephrase || !this.activeRephrase.original || !this.activeRephrase.rephrased) {
       return;
     }
 
     // Dispose decorations
-    if (this.activeRephrase.originalDecoration) {
-      this.activeRephrase.originalDecoration.dispose();
-    }
-
-    if (this.activeRephrase.rephrasedDecoration) {
-      this.activeRephrase.rephrasedDecoration.dispose();
-    }
+    this.activeRephrase.original.decoration.dispose();
+    this.activeRephrase.rephrased.decoration.dispose();
 
     // Clear the active rephrase
     this.activeRephrase = null;
