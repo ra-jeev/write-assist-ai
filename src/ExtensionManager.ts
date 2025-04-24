@@ -2,7 +2,7 @@ import { commands, ExtensionContext, languages, Range, TextDocument } from 'vsco
 import { ExtensionConfig } from './config/ExtensionConfig';
 import { AIServiceFactory } from './services/AIServiceFactory';
 import { WriteAssistAI } from './WriteAssistAI';
-import { OPEN_AI_API_KEY_CMD } from './constants';
+import { ACCEPT_REPHRASE_CMD, OPEN_AI_API_KEY_CMD, REJECT_REPHRASE_CMD } from './constants';
 
 export class ExtensionManager {
   private config: ExtensionConfig;
@@ -50,6 +50,33 @@ export class ExtensionManager {
     }
   }
 
+  private registerCodeLensProviderAndCmds(codelensProvider: WriteAssistAI, supportedLanguages: string[], supportedCommands: string[]) {
+    // Register the code lens provider for supported languages
+    const provider = languages.registerCodeLensProvider(
+      supportedLanguages,
+      codelensProvider
+    );
+
+    this.context.subscriptions.push(provider);
+
+    // Register the commands for accept/reject buttons
+    this.context.subscriptions.push(
+      commands.registerCommand(ACCEPT_REPHRASE_CMD,
+        () => {
+          codelensProvider.acceptRephrase();
+        }
+      )
+    );
+
+    this.context.subscriptions.push(
+      commands.registerCommand(REJECT_REPHRASE_CMD,
+        () => {
+          codelensProvider.rejectRephrase();
+        }
+      )
+    );
+  }
+
   private registerCommandsAndActions() {
     const writeAssist: WriteAssistAI = new WriteAssistAI(
       this.config,
@@ -66,6 +93,8 @@ export class ExtensionManager {
     ];
 
     this.registerCodeActionsProviderAndCmds(writeAssist, supportedLanguages, writeAssist.commands);
+
+    this.registerCodeLensProviderAndCmds(writeAssist, supportedLanguages, writeAssist.commands);
 
     // Add the command for OpenAI API Key configuration
     this.context.subscriptions.push(

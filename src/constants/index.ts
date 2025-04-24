@@ -24,11 +24,15 @@ export enum ConfigurationKeys {
   separator = 'separatorText',
 }
 
-// Keys for the VSCode Command Pallette Commands
-// that this extension provides
+// Keys for the VSCode Command Pallette or other inEditor
+// commands that this extension provides
 export enum CommandKeys {
   openAiApiKey = 'openAiApiKey',
+  acceptRephrase = 'acceptRephrase',
+  rejectRephrase = 'rejectRephrase',
 }
 
 export const CONFIG_SECTION_KEY = 'writeAssistAi';
 export const OPEN_AI_API_KEY_CMD = `${CONFIG_SECTION_KEY}.${CommandKeys.openAiApiKey}`;
+export const ACCEPT_REPHRASE_CMD = `${CONFIG_SECTION_KEY}.${CommandKeys.acceptRephrase}`;
+export const REJECT_REPHRASE_CMD = `${CONFIG_SECTION_KEY}.${CommandKeys.rejectRephrase}`;

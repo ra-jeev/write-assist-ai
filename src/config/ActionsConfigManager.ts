@@ -5,7 +5,7 @@ import { ConfigurationKeys } from '../constants';
 import type { ExtensionActions, LanguageConfig, WritingAction } from '../types';
 
 export class ActionsConfigManager {
-  constructor(private readonly config: ExtensionConfig) {}
+  constructor(private readonly config: ExtensionConfig) { }
 
   getActions(): ExtensionActions {
     return {
@@ -19,10 +19,11 @@ export class ActionsConfigManager {
       Omit<WritingAction, 'id'>[]
     >(type, []);
 
+    const actionType = type.toLowerCase();
     const actions: LanguageConfig<WritingAction[]> = { default: [] };
     for (const languageId in actionsCfg) {
       actions[languageId] = actionsCfg[languageId].map((action, index) => {
-        const id = `${type.toLowerCase()}-${languageId}-${index}`;
+        const id = `${actionType}-${languageId}-${index}`;
         return { ...action, id, prompt: action.prompt.trim() };
       });
     }
