@@ -1,10 +1,12 @@
 # Write Assist AI
 
-The WriteAssistAI extension for VSCode utilizes the OpenAI APIs (or OpenAI compatible proxies) to offer AI-powered writing assistance for markdown, LaTeX and plain text files. It comes with some default actions to rephrase the selected text, or perform tasks like tone change, summarize, expand etc. These actions are completely configurable through the extension's settings.
+The WriteAssistAI extension for VSCode utilizes the OpenAI APIs (or OpenAI compatible proxies) to offer AI-powered writing assistance for markdown, LaTeX, quarto and plain text files. It comes with some default actions to rephrase the selected text, or perform tasks like tone change, summarize, expand etc. These actions are completely configurable through the extension's settings.
 
 ## 🎯 Features
 
-This AI text assistant provides a range of writing styles for you to select from. To access these styles, and other features, simply select the text you want to rewrite in a supported file. Then, click on the Code Actions 💡 tooltip and choose the desired action.
+This AI text assistant provides a range of writing styles for you to select from. To access these styles, and other features, simply select the text you want to rewrite in a supported file. Then, click on the Code Actions 💡 tooltip and choose the desired action. 
+
+After a successful response from your chosen model, you'll be presented with inline actions to accpet or reject the rewriten text. Incase you've already changed the active editor, the response will be directly inserted into the original editor, just below the selected text.
 
 ![Extension Demo](/assets/images/WriteAssistAiDemo.gif)
 
@@ -16,6 +18,8 @@ Current feature list:
 * Summarize selected text
 * Expand selected text (make it verbose)
 * Shorten selected text (make it concise)
+* Accept or reject the rewritten text
+* Support for markdown, LaTeX, quarto and plain text files
 
 You can modify the existing actions (including their prompt), or add new ones through the extension's settings.
 
