@@ -318,7 +318,6 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
   provideCodeLenses(document: TextDocument): CodeLens[] {
     const codeLenses: CodeLens[] = [];
 
-
     // Only provide codelenses if there's an active rephrase for this document
     if (!this.activeRephrase ||
       this.activeRephrase.document.uri.toString() !== document.uri.toString() ||
@@ -356,6 +355,17 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     return codeLenses;
   }
 
+  async deleteRephrase(document: TextDocument, rephrasedRange: Range) {
+    // Need to also delete one newline after the rephrased text
+    const deleteRange = new Range(
+      rephrasedRange.start.line, rephrasedRange.start.character,
+      rephrasedRange.end.line + 1, 0
+    );
+
+    // Delete the rephrased text and newline
+    await this.deleteRange(document, deleteRange);
+  }
+
   // Accept the rephrased text (keep it, delete original)
   async acceptRephrase() {
     if (!this.activeRephrase || !this.activeRephrase.original || !this.activeRephrase.rephrased) {
@@ -363,15 +373,19 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     }
 
     try {
-      // Delete the original text
-      await this.deleteRange(this.activeRephrase.document, this.activeRephrase.original.range);
+      const rephrasedText = this.activeRephrase.document.getText(this.activeRephrase.rephrased.range);
 
-      // Clean up any decorations
-      await this.cleanupRephrase();
+      // Replace the original text with the rephrased text
+      await this.replaceText(this.activeRephrase.document, this.activeRephrase.original.range, rephrasedText);
+
+      // Delete the rephrased text
+      this.deleteRephrase(this.activeRephrase.document, this.activeRephrase.rephrased.range);
     } catch (error) {
       window.showErrorMessage(`Error accepting rephrased text: ${error}`);
-      await this.cleanupRephrase();
     }
+
+    // Clean up any decorations
+    await this.cleanupRephrase();
   }
 
   // Reject the rephrased text (delete it, keep original)
@@ -381,23 +395,14 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     }
 
     try {
-      const rephrasedRange = this.activeRephrase.rephrased.range;
-
-      // Need to also delete one newline after the rephrased text
-      const deleteRange = new Range(
-        rephrasedRange.start.line, rephrasedRange.start.character,
-        rephrasedRange.end.line + 1, 0
-      );
-
       // Delete the rephrased text and newlines
-      await this.deleteRange(this.activeRephrase.document, deleteRange);
-
-      // Clean up decorations
-      await this.cleanupRephrase();
+      await this.deleteRephrase(this.activeRephrase.document, this.activeRephrase.rephrased.range);
     } catch (error) {
       window.showErrorMessage(`Error rejecting rephrased text: ${error}`);
-      await this.cleanupRephrase();
     }
+
+    // Clean up decorations
+    await this.cleanupRephrase();
   }
 
   // Clean up decorations and stored data
