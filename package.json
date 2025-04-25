@@ -105,7 +105,7 @@
         },
         "writeAssistAi.systemPrompt": {
           "type": "string",
-          "default": "You are a helpful assistant. Your job is to perform the tasks related to rewriting text inputs given by the user. If the input text contains any special syntax then strictly follow that syntax, e.g. for markdown return markdown, for latex return latex etc. Do not return markdown for latex, and vice versa.",
+          "default": "You are a helpful assistant. Your job is to perform the tasks related to rewriting text inputs given by the user. If the input text contains any special syntax then strictly follow that syntax, e.g. for markdown return markdown, for latex return latex etc. Do not return markdown for latex, and vice versa. You must return only the modified output. Do not explain, greet, apologize, or add any commentary. Do not say things like ‘here is the revised text’. Simply return the text as if you're a function returning a value.",
           "order": 5,
           "scope": "language-overridable",
           "editPresentation": "multilineText",
