@@ -381,8 +381,16 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     }
 
     try {
+      const rephrasedRange = this.activeRephrase.rephrased.range;
+
+      // Need to also delete one newline after the rephrased text
+      const deleteRange = new Range(
+        rephrasedRange.start.line, rephrasedRange.start.character,
+        rephrasedRange.end.line + 1, 0
+      );
+
       // Delete the rephrased text and newlines
-      await this.deleteRange(this.activeRephrase.document, this.activeRephrase.rephrased.range);
+      await this.deleteRange(this.activeRephrase.document, deleteRange);
 
       // Clean up decorations
       await this.cleanupRephrase();
