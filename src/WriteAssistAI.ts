@@ -144,17 +144,17 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     let newLinesAdded = 1;
 
     if (addSeparator) {
-      textWithSeparator[0] = '\n';
-      newLinesAdded++;
-
       const separator = this.config.getSeparator();
       if (separator) {
         textWithSeparator.splice(1, 0, separator);
         textWithSeparator.push(separator);
         newLinesAdded++;
-      }
+      } else {
+        textWithSeparator[0] = '\n';
+        newLinesAdded++;
 
-      textWithSeparator.push(''); // Add an empty line at the end
+        textWithSeparator.push(''); // To add an empty line at the end
+      }
     }
 
     const edit = new WorkspaceEdit();
@@ -221,29 +221,6 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
       return;
     }
 
-    // let newRange: Range | undefined;
-    // let message = '';
-
-    // try {
-    //   newRange = await this.insertText(document, range.end, 'Thinking...');
-
-    //   const text = document.getText(range);
-    //   message = await openAIService.createChatCompletion(
-    //     prompt,
-    //     text,
-    //     document.languageId
-    //   );
-    // } catch (error) {
-    //   message = 'Error: Failed to process';
-    //   if (error instanceof Error) {
-    //     message = error.message;
-    //   }
-    // }
-
-    // if (newRange) {
-    //   await this.replaceText(document, newRange, message);
-    // }
-
     // Show loading indicator while getting rephrased text
     await window.withProgress({
       location: ProgressLocation.Notification,
@@ -305,6 +282,9 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
             // Trigger codelens refresh to show buttons
             this.codeLensEventEmitter.fire();
           }
+        } else {
+          // If no valid editor is found, directly insert the rephrased text
+          await this.insertText(document, range.end, rephrasedText);
         }
       } catch (error) {
         window.showErrorMessage(`Error generating rephrased text: ${error}`);
