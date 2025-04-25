@@ -252,7 +252,7 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     }, async (progress, token) => {
       // Listen for cancellation
       token.onCancellationRequested(() => {
-        this.cleanupRephrase();
+        window.showInformationMessage('Rephrase cancelled.');
         return;
       });
 
@@ -265,6 +265,12 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
           originalText,
           document.languageId
         );
+
+        if (token.isCancellationRequested) {
+          // Simply return if the task was cancelled
+          this.currentlyProcessing = false;
+          return;
+        }
 
         progress.report({ increment: 70 });
 
