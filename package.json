@@ -2,7 +2,7 @@
   "name": "write-assist-ai",
   "displayName": "Write Assist AI",
   "description": "Fully customizable AI-powered Text Rewriter/Paraphraser for VS Code. Boost your writing productivity and creativity with AI-powered rewrites! This extension seamlessly integrates with VS Code, allowing you to rewrite text in Markdown, LaTeX, and plain text files using the latest OpenAI models.",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "publisher": "ra-jeev",
   "repository": {
     "url": "https://github.com/ra-jeev/write-assist-ai"
