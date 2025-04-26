@@ -1,6 +1,12 @@
 import { OpenAI, APIError } from 'openai';
 import type { OpenAIConfig } from '../types';
-import { ERROR_MESSAGES } from '../constants';
+
+const ERROR_MESSAGES = {
+  NO_API_KEY: 'No API key provided.',
+  FAILED_TO_PROCESS: 'Failed to process.',
+  NO_CHOICES_RETURNED: 'No choices returned by the API.',
+  EMPTY_CONTENT: 'Empty content returned by the API.',
+};
 
 export class OpenAIService {
   private readonly openAiSvc: OpenAI;
@@ -43,8 +49,7 @@ export class OpenAIService {
         });
       }
 
-      const userPrompt = `${cmdPrompt}${
-        cmdPrompt.endsWith(':') ? '\n\n' : ':\n\n'
+      const userPrompt = `${cmdPrompt}${cmdPrompt.endsWith(':') ? '\n\n' : ':\n\n'
       }${text}`;
       messages.push({ role: 'user', content: userPrompt });
 
@@ -56,20 +61,20 @@ export class OpenAIService {
         n: 1,
       });
 
-      let finalContent = ERROR_MESSAGES.NO_CHOICES_RETURNED;
       if (response.choices.length) {
-        finalContent =
-          response.choices[0].message.content?.trim() ||
-          ERROR_MESSAGES.EMPTY_CONTENT;
+        const finalContent = response.choices[0].message.content?.trim();
+        if (!finalContent) {
+          throw new Error(ERROR_MESSAGES.EMPTY_CONTENT);
       }
 
       return finalContent;
+      }
+
+      throw new Error(ERROR_MESSAGES.NO_CHOICES_RETURNED);
     } catch (error) {
       let errMessage = ERROR_MESSAGES.FAILED_TO_PROCESS;
       if (error instanceof APIError) {
-        errMessage = `${error.name}: ${error.type}: ${
-          error.code ? error.code + ': ' + error.message : error.message
-        }`;
+        errMessage = `${error.name}: ${error.type}: ${error.code ? error.code + ': ' + error.message : error.message}`;
       } else if (error instanceof Error) {
         errMessage = `Error: ${error.message}`;
       }

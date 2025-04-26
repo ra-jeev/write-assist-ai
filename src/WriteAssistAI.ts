@@ -35,6 +35,15 @@ type RephraseTask = {
   rephrased?: DecorationWithRange;
 }
 
+const InfoMessages = {
+  AI_SERVICE_ERROR: 'Error initializing AI service.',
+  REPHRASE_ERROR: 'Error generating rephrased text.',
+  REPHRASE_ACCEPT_ERROR: 'Error accepting rephrased text.',
+  REPHRASE_REJECT_ERROR: 'Error rejecting rephrased text.',
+  GENERATING_REPHRASE: 'Generating rephrased text...',
+  REPHRASE_CANCELLED: 'Rephrase task cancelled!',
+};
+
 export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
   activeRephrase: RephraseTask | null = null;
 
@@ -210,11 +219,12 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     try {
       openAIService = await this.aiServiceFactory.getService();
     } catch (error) {
-      await this.insertText(
-        document,
-        range.end,
-        'Error: No API Key entered in the config input box above.\nPlease retry the selection and set the key.'
-      );
+      let errorMessage = InfoMessages.AI_SERVICE_ERROR;
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      window.showErrorMessage(errorMessage);
 
       this.currentlyProcessing = false;
 
@@ -224,12 +234,12 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     // Show loading indicator while getting rephrased text
     await window.withProgress({
       location: ProgressLocation.Notification,
-      title: "Generating rephrased text...",
+      title: InfoMessages.GENERATING_REPHRASE,
       cancellable: true
     }, async (progress, token) => {
       // Listen for cancellation
       token.onCancellationRequested(() => {
-        window.showInformationMessage('Rephrase cancelled.');
+        window.showInformationMessage(InfoMessages.REPHRASE_CANCELLED);
         return;
       });
 
@@ -287,7 +297,13 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
           await this.insertText(document, range.end, rephrasedText);
         }
       } catch (error) {
-        window.showErrorMessage(`Error generating rephrased text: ${error}`);
+        let errorMessage = InfoMessages.REPHRASE_ERROR;
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+
+        window.showErrorMessage(errorMessage);
+
         await this.cleanupRephrase();
       }
 
@@ -361,7 +377,12 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
       // Delete the rephrased text
       this.deleteRephrase(this.activeRephrase.document, this.activeRephrase.rephrased.range);
     } catch (error) {
-      window.showErrorMessage(`Error accepting rephrased text: ${error}`);
+      let errorMessage = InfoMessages.REPHRASE_ACCEPT_ERROR;
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      window.showErrorMessage(errorMessage);
     }
 
     // Clean up any decorations
@@ -378,7 +399,12 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
       // Delete the rephrased text and newlines
       await this.deleteRephrase(this.activeRephrase.document, this.activeRephrase.rephrased.range);
     } catch (error) {
-      window.showErrorMessage(`Error rejecting rephrased text: ${error}`);
+      let errorMessage = InfoMessages.REPHRASE_REJECT_ERROR;
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      window.showErrorMessage(errorMessage);
     }
 
     // Clean up decorations

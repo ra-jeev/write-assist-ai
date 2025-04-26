@@ -1,6 +1,5 @@
 import { OpenAIService } from './OpenAIService';
 import { ExtensionConfig } from '../config/ExtensionConfig';
-import { ERROR_MESSAGES } from '../constants';
 
 export class AIServiceFactory {
   private openAIService: OpenAIService | null = null;
@@ -17,7 +16,7 @@ export class AIServiceFactory {
       if (!apiKey) {
         apiKey = await this.config.promptUserForApiKey();
         if (!apiKey) {
-          throw new Error(ERROR_MESSAGES.NO_API_KEY);
+          throw new Error('Error: Couldn\'t initialize AI service, no API key provided.');
         }
       }
 
