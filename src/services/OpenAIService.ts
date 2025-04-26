@@ -50,7 +50,7 @@ export class OpenAIService {
       }
 
       const userPrompt = `${cmdPrompt}${cmdPrompt.endsWith(':') ? '\n\n' : ':\n\n'
-      }${text}`;
+        }${text}`;
       messages.push({ role: 'user', content: userPrompt });
 
       const response = await this.openAiSvc.chat.completions.create({
@@ -65,9 +65,9 @@ export class OpenAIService {
         const finalContent = response.choices[0].message.content?.trim();
         if (!finalContent) {
           throw new Error(ERROR_MESSAGES.EMPTY_CONTENT);
-      }
+        }
 
-      return finalContent;
+        return finalContent;
       }
 
       throw new Error(ERROR_MESSAGES.NO_CHOICES_RETURNED);

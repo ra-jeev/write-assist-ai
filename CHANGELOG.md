@@ -6,6 +6,22 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 
 --
 
+## [v0.6.0] - 2025-04-26
+
+### Added
+
+* Support for inline accept/reject of the AI suggestions with git diff like interface (#23)
+* If active editor is changed while waiting for the AI response, the rephrased text is direclty inserted into the correct editor
+
+### Fixed
+
+* Fixed the issue of inserting the rephrased text into the wrong editor if active editor is changed while waiting for the AI response (#24)
+
+### Updated
+
+* New demo gif for the extension showing the inline accept/reject feature
+* Updated the README with the new feature
+
 ## [v0.5.1] - 2025-04-18
 
 ### Fixed
@@ -15,7 +31,6 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 ### Changed
 
 * Moved from Webpack to esbuild for building the extension
-
 
 ## [v0.5.0] - 2024-09-16
 

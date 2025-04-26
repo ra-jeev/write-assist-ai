@@ -104,6 +104,22 @@ To specify actions for a specific language, place the actions within the corresp
 
 ## 🚀 Release Notes
 
+### v0.6.0
+
+#### Added
+
+* Support for inline accept/reject of the AI suggestions with git diff like interface (#23)
+* If active editor is changed while waiting for the AI response, the rephrased text is direclty inserted into the correct editor
+
+#### Fixed
+
+* Fixed the issue of inserting the rephrased text into the wrong editor if active editor is changed while waiting for the AI response (#24)
+
+#### Updated
+
+* New demo gif for the extension showing the inline accept/reject feature
+* Updated the README with the new feature
+
 ### v0.5.1
 
 #### Fixed
@@ -147,23 +163,6 @@ To specify actions for a specific language, place the actions within the corresp
 #### Fixed
 
 * Move the action prompt to user message prefix of the OpenAI API call.
-
-### v0.3.0
-
-#### Added
-
-* A new command in the `Command Palette` to set/reset the OpenAI API Key
-* A common `system prompt` config for use with the LLM calls
-* Dynamically configurable `Quick Fix` and `Rewrite` actions
-* Use of `v1/chat/completions` endpoint of `OpenAI`
-
-#### Fixed
-
-* [API response display issue](https://github.com/ra-jeev/write-assist-ai/issues/9) while setting the API Key
-
-#### Removed
-
-* Use of legacy `v1/completions` endpoint of `OpenAI`
 
 ## 📜 Changelog
 
