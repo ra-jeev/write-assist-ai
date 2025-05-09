@@ -29,7 +29,7 @@
     "quarto",
     "chatgpt",
     "rewrite",
-    "rewriting"
+    "mdx"
   ],
   "icon": "assets/images/icon.png",
   "galleryBanner": {
@@ -38,6 +38,9 @@
   },
   "activationEvents": [
     "onLanguage:markdown",
+    "onLanguage:mdx",
+    "onLanguage:markdown_latex_combined",
+    "onLanguage:markdown-math",
     "onLanguage:plaintext",
     "onLanguage:latex",
     "onLanguage:tex",

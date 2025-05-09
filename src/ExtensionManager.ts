@@ -85,6 +85,9 @@ export class ExtensionManager {
 
     const supportedLanguages = [
       'markdown',
+      "markdown_latex_combined",
+      "markdown-math",
+      "mdx",
       'plaintext',
       'tex',
       'latex',
