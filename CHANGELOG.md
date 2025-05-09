@@ -6,6 +6,16 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 
 --
 
+## [v0.6.1] - 2025-05-09
+
+### Fixed
+
+* Added explicit support for `mdx` files (#25)
+
+### Updated
+
+* Updated README with Ollama setup instructions (#26)
+
 ## [v0.6.0] - 2025-04-26
 
 ### Added

@@ -115,6 +115,16 @@ To specify actions for a specific language, place the actions within the corresp
 
 ## 🚀 Release Notes
 
+### v0.6.1
+
+#### Fixed
+
+* Added explicit support for `mdx` files (#25)
+
+#### Updated
+
+* Updated README with Ollama setup instructions (#26)
+
 ### v0.6.0
 
 #### Added
@@ -168,12 +178,6 @@ To specify actions for a specific language, place the actions within the corresp
 #### Fixed
 
 * OpenAI config changes take effect immediately without a reload.
-
-### v0.3.1
-
-#### Fixed
-
-* Move the action prompt to user message prefix of the OpenAI API call.
 
 ## 📜 Changelog
 
