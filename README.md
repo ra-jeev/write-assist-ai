@@ -116,6 +116,12 @@ To specify actions for a specific language, place the actions within the corresp
 
 ## 🚀 Release Notes
 
+### v0.6.2
+
+#### Added
+
+* Option to enable/disable the inline accept/reject flow for AI suggestions (#28)
+
 ### v0.6.1
 
 #### Fixed

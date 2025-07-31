@@ -6,6 +6,12 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 
 --
 
+## [v0.6.2] - 2025-07-31
+
+### Added
+
+* Option to enable/disable the inline accept/reject flow for AI suggestions (#28)
+
 ## [v0.6.1] - 2025-05-09
 
 ### Fixed
@@ -21,7 +27,7 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 ### Added
 
 * Support for inline accept/reject of the AI suggestions with git diff like interface (#23)
-* If active editor is changed while waiting for the AI response, the rephrased text is direclty inserted into the correct editor
+* If active editor is changed while waiting for the AI response, the rephrased text is directly inserted into the correct editor
 
 ### Fixed
 
