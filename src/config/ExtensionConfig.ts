@@ -16,6 +16,7 @@ export class ExtensionConfig {
   private actionsConfig: ActionsConfigManager;
   private secretsManager: SecretsManager;
   private separator = '';
+  private useAcceptRejectFlow = true;
 
   constructor(
     private readonly context: ExtensionContext,
@@ -28,6 +29,7 @@ export class ExtensionConfig {
     this.registerConfigChangeListener();
     this.openAIConfig.migrateApiKey();
 
+    this.updateUseAcceptRejectFlow();
     this.initSeparator();
   }
 
@@ -35,6 +37,13 @@ export class ExtensionConfig {
     this.separator = this.getConfiguration(
       ConfigurationKeys.separator,
       ''
+    ).default;
+  }
+
+  private updateUseAcceptRejectFlow() {
+    this.useAcceptRejectFlow = this.getConfiguration(
+      ConfigurationKeys.useAcceptRejectFlow,
+      true
     ).default;
   }
 
@@ -87,6 +96,10 @@ export class ExtensionConfig {
     return this.separator;
   }
 
+  getUseAcceptRejectFlow(): boolean {
+    return this.useAcceptRejectFlow;
+  }
+
   getActions(): ExtensionActions {
     return this.actionsConfig.getActions();
   }
@@ -118,6 +131,8 @@ export class ExtensionConfig {
       this.openAIConfig.notifyConfigChanged(event);
     } else if (isConfigChanged(event, ConfigurationKeys.separator)) {
       this.initSeparator();
+    } else if (isConfigChanged(event, ConfigurationKeys.useAcceptRejectFlow)) {
+      this.updateUseAcceptRejectFlow();
     }
   }
 }

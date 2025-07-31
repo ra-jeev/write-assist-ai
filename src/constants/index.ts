@@ -15,6 +15,7 @@ export enum ConfigurationKeys {
   rewriteOptions = 'rewriteOptions',
   systemPrompt = 'systemPrompt',
   separator = 'separatorText',
+  useAcceptRejectFlow = 'useAcceptRejectFlow',
 }
 
 // Keys for the VSCode Command Pallette or other inEditor
