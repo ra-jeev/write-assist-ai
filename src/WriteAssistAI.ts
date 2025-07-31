@@ -261,9 +261,9 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
 
         progress.report({ increment: 70 });
 
+        const useAcceptRejectFlow = this.config.getUseAcceptRejectFlow();
         const editor = this.getEditorIfValid(document);
-        if (editor) {
-          // Remove the existing selection
+        if (editor && useAcceptRejectFlow) {
           editor.selection = new Selection(range.end, range.end);
 
           const rephrasedRange = await this.insertText(document, range.end, rephrasedText, false);
@@ -293,7 +293,8 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
             this.codeLensEventEmitter.fire();
           }
         } else {
-          // If no valid editor is found, directly insert the rephrased text
+          // If no valid editor is found, or if accept/reject flow is disabled
+          // then directly insert the rephrased text
           await this.insertText(document, range.end, rephrasedText);
         }
       } catch (error) {
@@ -314,21 +315,17 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
   provideCodeLenses(document: TextDocument): CodeLens[] {
     const codeLenses: CodeLens[] = [];
 
-    // Only provide codelenses if there's an active rephrase for this document
     if (!this.activeRephrase ||
       this.activeRephrase.document.uri.toString() !== document.uri.toString() ||
       !this.activeRephrase.original || !this.activeRephrase.rephrased) {
       return codeLenses;
     }
 
-
-    // Create a range for the codelens (just after the rephrased text)
     const lensRange = new Range(
       this.activeRephrase.rephrased.range.end.line + 1, 0,
       this.activeRephrase.rephrased.range.end.line + 1, 0
     );
 
-    // Accept button
     codeLenses.push(new CodeLens(
       lensRange,
       {
@@ -338,7 +335,6 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
       }
     ));
 
-    // Reject button
     codeLenses.push(new CodeLens(
       lensRange,
       {
@@ -352,17 +348,14 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
   }
 
   async deleteRephrase(document: TextDocument, rephrasedRange: Range) {
-    // Need to also delete one newline after the rephrased text
     const deleteRange = new Range(
       rephrasedRange.start.line, rephrasedRange.start.character,
       rephrasedRange.end.line + 1, 0
     );
 
-    // Delete the rephrased text and newline
     await this.deleteRange(document, deleteRange);
   }
 
-  // Accept the rephrased text (keep it, delete original)
   async acceptRephrase() {
     if (!this.activeRephrase || !this.activeRephrase.original || !this.activeRephrase.rephrased) {
       return;
@@ -371,10 +364,8 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     try {
       const rephrasedText = this.activeRephrase.document.getText(this.activeRephrase.rephrased.range);
 
-      // Replace the original text with the rephrased text
       await this.replaceText(this.activeRephrase.document, this.activeRephrase.original.range, rephrasedText);
 
-      // Delete the rephrased text
       this.deleteRephrase(this.activeRephrase.document, this.activeRephrase.rephrased.range);
     } catch (error) {
       let errorMessage = InfoMessages.REPHRASE_ACCEPT_ERROR;
@@ -385,18 +376,15 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
       window.showErrorMessage(errorMessage);
     }
 
-    // Clean up any decorations
     await this.cleanupRephrase();
   }
 
-  // Reject the rephrased text (delete it, keep original)
   async rejectRephrase() {
     if (!this.activeRephrase || !this.activeRephrase.original || !this.activeRephrase.rephrased) {
       return;
     }
 
     try {
-      // Delete the rephrased text and newlines
       await this.deleteRephrase(this.activeRephrase.document, this.activeRephrase.rephrased.range);
     } catch (error) {
       let errorMessage = InfoMessages.REPHRASE_REJECT_ERROR;
@@ -407,24 +395,19 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
       window.showErrorMessage(errorMessage);
     }
 
-    // Clean up decorations
     await this.cleanupRephrase();
   }
 
-  // Clean up decorations and stored data
   private async cleanupRephrase() {
     if (!this.activeRephrase || !this.activeRephrase.original || !this.activeRephrase.rephrased) {
       return;
     }
 
-    // Dispose decorations
     this.activeRephrase.original.decoration.dispose();
     this.activeRephrase.rephrased.decoration.dispose();
 
-    // Clear the active rephrase
     this.activeRephrase = null;
 
-    // Refresh codelenses
     this.codeLensEventEmitter.fire();
   }
 }
