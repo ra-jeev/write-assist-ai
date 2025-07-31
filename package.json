@@ -114,10 +114,16 @@
           "editPresentation": "multilineText",
           "markdownDescription": "Set the system prompt to use for the API calls. The prompt specific to a performed action will be in addition to this system prompt.\n\n**Language Specific Config:** You can also different system prompts for different languages. To do that open your VS Code settings UI and type `@lang:<languageId> Write Assist AI` e.g. `@lang:markdown Write Assist AI` and set the System Prompt for the selected language."
         },
+        "writeAssistAi.useAcceptRejectFlow": {
+          "type": "boolean",
+          "default": true,
+          "order": 6,
+          "markdownDescription": "When enabled, the original and rewritten text will be shown one below the other, with option to accept or reject the rewritten version.\n\nIf disabled, the rewritten text is automatically inserted into the editor enclosed within the configured '#writeAssistAi.separatorText#'."
+        },
         "writeAssistAi.separatorText": {
           "type": "string",
           "default": "********************************",
-          "order": 6,
+          "order": 7,
           "markdownDescription": "The separator text that should appear around the rewritten text. Leave it empty for no separator."
         },
         "writeAssistAi.quickFixes": {
