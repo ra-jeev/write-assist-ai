@@ -30,3 +30,8 @@ export const CONFIG_SECTION_KEY = 'writeAssistAi';
 export const OPEN_AI_API_KEY_CMD = `${CONFIG_SECTION_KEY}.${CommandKeys.openAiApiKey}`;
 export const ACCEPT_REPHRASE_CMD = `${CONFIG_SECTION_KEY}.${CommandKeys.acceptRephrase}`;
 export const REJECT_REPHRASE_CMD = `${CONFIG_SECTION_KEY}.${CommandKeys.rejectRephrase}`;
+
+export const CONFIG_DIR = '.write-assist-ai';
+export const SYSTEM_PROMPT_FILE = 'systemPrompt.md';
+export const QUICK_FIXES_FILE = 'quickFixes.json';
+export const REWRITE_OPTIONS_FILE = 'rewriteOptions.json';
