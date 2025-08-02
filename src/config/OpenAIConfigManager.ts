@@ -1,6 +1,5 @@
 import { ConfigurationChangeEvent } from 'vscode';
 import { ExtensionConfig } from './ExtensionConfig';
-import { SecretsManager } from './SecretsManager';
 import { isConfigChanged, promptUserForConfig } from './ConfigUtils';
 import {
   ConfigurationKeys,
@@ -12,19 +11,16 @@ import type { OpenAIConfig } from '../types';
 
 export class OpenAIConfigManager {
   private changeListener: ((resetOpenAISvc: boolean) => any) | undefined;
+  private apiKey: string | undefined;
 
-  constructor(
-    private readonly config: ExtensionConfig,
-    private readonly secretsManager: SecretsManager
-  ) {
-    this.secretsManager.registerChangeListener(
-      ConfigurationKeys.openAiApiKey,
-      this.onApiKeyChanged.bind(this)
-    );
-  }
+  constructor(private readonly config: ExtensionConfig) { }
 
   async getApiKey(): Promise<string | undefined> {
-    return this.secretsManager.getSecret(ConfigurationKeys.openAiApiKey);
+    if (!this.apiKey) {
+      this.apiKey = await this.config.getSecret(ConfigurationKeys.openAiApiKey);
+    }
+
+    return this.apiKey;
   }
 
   async promptUserForApiKey(): Promise<string | undefined> {
@@ -42,7 +38,7 @@ export class OpenAIConfigManager {
       return;
     }
 
-    await this.secretsManager.storeSecret(
+    await this.config.setSecret(
       ConfigurationKeys.openAiApiKey,
       apiKey
     );
@@ -118,8 +114,8 @@ export class OpenAIConfigManager {
     this.changeListener = listener;
   }
 
-  private onApiKeyChanged(key: string) {
-    if (this.changeListener && key === ConfigurationKeys.openAiApiKey) {
+  onApiKeyChanged() {
+    if (this.changeListener) {
       this.changeListener(true);
     }
   }

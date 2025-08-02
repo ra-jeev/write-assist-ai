@@ -23,10 +23,14 @@ export class ExtensionConfig {
     private readonly cmdsChangeListener: CommandsChangeListener
   ) {
     this.secretsManager = new SecretsManager(this.context);
-    this.openAIConfig = new OpenAIConfigManager(this, this.secretsManager);
+    this.openAIConfig = new OpenAIConfigManager(this);
     this.actionsConfig = new ActionsConfigManager(this);
 
     this.registerConfigChangeListener();
+    this.secretsManager.registerChangeListener(
+      ConfigurationKeys.openAiApiKey,
+      () => this.openAIConfig.onApiKeyChanged()
+    );
 
     this.updateUseAcceptRejectFlow();
     this.initSeparator();
@@ -81,6 +85,14 @@ export class ExtensionConfig {
     } catch (error) {
       console.error(`No workspace configuration for ${key}`, error);
     }
+  }
+
+  getSecret(key: string): Promise<string | undefined> {
+    return this.secretsManager.getSecret(key);
+  }
+  
+  setSecret(key: string, value: string): Promise<void> {
+    return this.secretsManager.storeSecret(key, value);
   }
 
   getOpenAIConfig(): OpenAIConfig {
