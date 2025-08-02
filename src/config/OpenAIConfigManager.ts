@@ -50,27 +50,6 @@ export class OpenAIConfigManager {
     return apiKey;
   }
 
-  async migrateApiKey(): Promise<void> {
-    const apiKey = this.config.getConfiguration<string>(
-      ConfigurationKeys.deprecatedOpenAiApiKey,
-      ''
-    );
-
-    if (apiKey.default) {
-      // Store the key in the secretStorage
-      await this.secretsManager.storeSecret(
-        ConfigurationKeys.openAiApiKey,
-        apiKey.default
-      );
-
-      // Delete the key from the settings
-      await this.config.updateConfiguration(
-        ConfigurationKeys.deprecatedOpenAiApiKey,
-        undefined
-      );
-    }
-  }
-
   getConfig(): OpenAIConfig {
     const maxTokens = this.config.getConfiguration<number>(
       ConfigurationKeys.maxTokens,

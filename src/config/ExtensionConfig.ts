@@ -27,7 +27,6 @@ export class ExtensionConfig {
     this.actionsConfig = new ActionsConfigManager(this);
 
     this.registerConfigChangeListener();
-    this.openAIConfig.migrateApiKey();
 
     this.updateUseAcceptRejectFlow();
     this.initSeparator();
