@@ -1,14 +1,14 @@
-import { workspace, Uri, FileSystemWatcher } from "vscode";
-import fs from "fs/promises";
-import path from "path";
+import { workspace, Uri, FileSystemWatcher } from 'vscode';
+import fs from 'fs/promises';
+import path from 'path';
 
 import {
   CONFIG_DIR,
   QUICK_FIXES_FILE,
   REWRITE_OPTIONS_FILE,
   SYSTEM_PROMPT_FILE,
-} from "../constants";
-import type { FileConfigType, FileConfigChangeListener } from "../types";
+} from '../constants';
+import type { FileConfigType, FileConfigChangeListener } from '../types';
 
 export class FileConfigManager {
   private listeners: Map<FileConfigType, FileConfigChangeListener[]> =
@@ -53,7 +53,7 @@ export class FileConfigManager {
     }
 
     try {
-      this.systemPrompt = await fs.readFile(filePath, "utf8");
+      this.systemPrompt = await fs.readFile(filePath, 'utf8');
     } catch {
       this.systemPrompt = undefined;
     }
@@ -66,7 +66,7 @@ export class FileConfigManager {
     }
 
     try {
-      this.quickFixes = await fs.readFile(filePath, "utf8");
+      this.quickFixes = await fs.readFile(filePath, 'utf8');
     } catch {
       this.quickFixes = undefined;
     }
@@ -79,7 +79,7 @@ export class FileConfigManager {
     }
 
     try {
-      this.rewriteOptions = await fs.readFile(filePath, "utf8");
+      this.rewriteOptions = await fs.readFile(filePath, 'utf8');
     } catch {
       this.rewriteOptions = undefined;
     }
@@ -110,15 +110,15 @@ export class FileConfigManager {
     switch (filename) {
       case SYSTEM_PROMPT_FILE:
         await this.loadSystemPrompt();
-        configType = "systemPrompt";
+        configType = 'systemPrompt';
         break;
       case QUICK_FIXES_FILE:
         await this.loadQuickFixes();
-        configType = "quickFixes";
+        configType = 'quickFixes';
         break;
       case REWRITE_OPTIONS_FILE:
         await this.loadRewriteOptions();
-        configType = "rewriteOptions";
+        configType = 'rewriteOptions';
         break;
     }
 
@@ -131,11 +131,11 @@ export class FileConfigManager {
 
   getConfig(type: FileConfigType) {
     switch (type) {
-      case "systemPrompt":
+      case 'systemPrompt':
         return this.systemPrompt;
-      case "quickFixes":
+      case 'quickFixes':
         return this.quickFixes;
-      case "rewriteOptions":
+      case 'rewriteOptions':
         return this.rewriteOptions;
     }
   }
