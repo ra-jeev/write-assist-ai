@@ -27,6 +27,10 @@ export class OpenAIService {
     this._config = config;
   }
 
+  set systemPrompt(systemPrompt: LanguageConfig<string>) {
+    this._systemPrompt = systemPrompt;
+  }
+
   getSystemPrompt(languageId: string) {
     if (languageId in this._systemPrompt) {
       return this._systemPrompt[languageId];

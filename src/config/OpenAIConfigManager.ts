@@ -7,10 +7,10 @@ import {
   DEFAULT_TEMPERATURE,
   DEFAULT_MODEL,
 } from '../constants';
-import type { LanguageConfig, OpenAIConfig } from '../types';
+import type { LanguageConfig, OpenAIConfig, OpenAIConfigChangeListener } from '../types';
 
 export class OpenAIConfigManager {
-  private changeListener: ((resetOpenAISvc: boolean) => any) | undefined;
+  private changeListener: OpenAIConfigChangeListener | undefined;
   private apiKey: string | undefined;
 
   constructor(private readonly config: ExtensionConfig) { }
@@ -105,19 +105,20 @@ export class OpenAIConfigManager {
 
   notifyConfigChanged(event: ConfigurationChangeEvent) {
     if (this.changeListener) {
-      const resetOpenAISvc = isConfigChanged(event, ConfigurationKeys.proxyUrl);
+      const isProxyUrlChange = isConfigChanged(event, ConfigurationKeys.proxyUrl);
+      const isSystemPromptChange = isConfigChanged(event, ConfigurationKeys.systemPrompt);
 
-      this.changeListener(resetOpenAISvc);
+      this.changeListener(isProxyUrlChange ? 'reset' : isSystemPromptChange ? 'systemPrompt' : 'config');
     }
   }
 
-  registerChangeListener(listener: (resetOpenAISvc: boolean) => any) {
+  registerChangeListener(listener: OpenAIConfigChangeListener) {
     this.changeListener = listener;
   }
 
   onApiKeyChanged() {
     if (this.changeListener) {
-      this.changeListener(true);
+      this.changeListener('reset');
     }
   }
 }

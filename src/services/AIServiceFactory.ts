@@ -1,5 +1,6 @@
 import { OpenAIService } from './OpenAIService';
 import { ExtensionConfig } from '../config/ExtensionConfig';
+import type { OpenAIConfigChangeType } from '../types';
 
 export class AIServiceFactory {
   private openAIService: OpenAIService | null = null;
@@ -31,11 +32,15 @@ export class AIServiceFactory {
     return this.openAIService;
   }
 
-  private onConfigChange(resetOpenAISvc: boolean) {
-    if (resetOpenAISvc) {
+  private onConfigChange(changeType: OpenAIConfigChangeType) {
+    if (changeType === 'reset') {
       this.openAIService = null;
     } else if (this.openAIService) {
-      this.openAIService.config = this.config.getOpenAIConfig();
+      if (changeType === 'systemPrompt') {
+        this.openAIService.systemPrompt = this.config.getSystemPrompt();
+      } else {
+        this.openAIService.config = this.config.getOpenAIConfig();
+      }
     }
   }
 }

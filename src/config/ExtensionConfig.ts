@@ -9,6 +9,7 @@ import type {
   ExtensionActions,
   LanguageConfig,
   OpenAIConfig,
+  OpenAIConfigChangeListener,
 } from '../types';
 
 export class ExtensionConfig {
@@ -128,7 +129,7 @@ export class ExtensionConfig {
   }
 
   registerOpenAiConfigChangeListener(
-    listener: (resetOpenAISvc: boolean) => any
+    listener: OpenAIConfigChangeListener
   ) {
     this.openAIConfig.registerChangeListener(listener);
   }
