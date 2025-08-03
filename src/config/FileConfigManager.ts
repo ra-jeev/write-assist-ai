@@ -1,18 +1,24 @@
-import { workspace, Uri, FileSystemWatcher } from 'vscode';
-import fs from 'fs/promises';
-import path from 'path';
+import { workspace, Uri, FileSystemWatcher } from "vscode";
+import fs from "fs/promises";
+import path from "path";
 
-import { CONFIG_DIR, QUICK_FIXES_FILE, REWRITE_OPTIONS_FILE, SYSTEM_PROMPT_FILE } from '../constants';
-import type { FileConfigType, FileConfigChangeListener } from '../types';
+import {
+  CONFIG_DIR,
+  QUICK_FIXES_FILE,
+  REWRITE_OPTIONS_FILE,
+  SYSTEM_PROMPT_FILE,
+} from "../constants";
+import type { FileConfigType, FileConfigChangeListener } from "../types";
 
 export class FileConfigManager {
-  private listeners: Map<FileConfigType, FileConfigChangeListener[]> = new Map();
+  private listeners: Map<FileConfigType, FileConfigChangeListener[]> =
+    new Map();
 
   private workspaceFolder: string | undefined;
   private watchers: FileSystemWatcher[] = [];
   private systemPrompt: string | undefined;
-  private quickFixes: any[] | undefined;
-  private rewriteOptions: any[] | undefined;
+  private quickFixes: string | undefined;
+  private rewriteOptions: string | undefined;
 
   constructor() {
     this.workspaceFolder = workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -26,9 +32,9 @@ export class FileConfigManager {
 
   private getConfigFilePath(filename: string): string | undefined {
     if (!this.workspaceFolder) {
-        return undefined;
+      return undefined;
     }
-    
+
     return path.join(this.workspaceFolder, CONFIG_DIR, filename);
   }
 
@@ -43,11 +49,11 @@ export class FileConfigManager {
   async loadSystemPrompt() {
     const filePath = this.getConfigFilePath(SYSTEM_PROMPT_FILE);
     if (!filePath) {
-        return;
+      return;
     }
 
     try {
-      this.systemPrompt = await fs.readFile(filePath, 'utf8');
+      this.systemPrompt = await fs.readFile(filePath, "utf8");
     } catch {
       this.systemPrompt = undefined;
     }
@@ -56,12 +62,11 @@ export class FileConfigManager {
   async loadQuickFixes() {
     const filePath = this.getConfigFilePath(QUICK_FIXES_FILE);
     if (!filePath) {
-        return;
+      return;
     }
 
     try {
-      const content = await fs.readFile(filePath, 'utf8');
-      this.quickFixes = JSON.parse(content);
+      this.quickFixes = await fs.readFile(filePath, "utf8");
     } catch {
       this.quickFixes = undefined;
     }
@@ -70,12 +75,11 @@ export class FileConfigManager {
   async loadRewriteOptions() {
     const filePath = this.getConfigFilePath(REWRITE_OPTIONS_FILE);
     if (!filePath) {
-        return;
+      return;
     }
 
     try {
-      const content = await fs.readFile(filePath, 'utf8');
-      this.rewriteOptions = JSON.parse(content);
+      this.rewriteOptions = await fs.readFile(filePath, "utf8");
     } catch {
       this.rewriteOptions = undefined;
     }
@@ -83,61 +87,67 @@ export class FileConfigManager {
 
   private setupWatchers() {
     if (!this.workspaceFolder) {
-        return;
+      return;
     }
 
     const configDirUri = Uri.file(path.join(this.workspaceFolder, CONFIG_DIR));
-    
-    [SYSTEM_PROMPT_FILE, QUICK_FIXES_FILE, REWRITE_OPTIONS_FILE].forEach((filename) => {
-      const fileUri = Uri.file(path.join(configDirUri.fsPath, filename));
-      const watcher = workspace.createFileSystemWatcher(fileUri.fsPath);
-      watcher.onDidChange(() => this.reloadConfig(filename));
-      watcher.onDidCreate(() => this.reloadConfig(filename));
-      watcher.onDidDelete(() => this.reloadConfig(filename));
-      this.watchers.push(watcher);
-    });
+
+    [SYSTEM_PROMPT_FILE, QUICK_FIXES_FILE, REWRITE_OPTIONS_FILE].forEach(
+      (filename) => {
+        const fileUri = Uri.file(path.join(configDirUri.fsPath, filename));
+        const watcher = workspace.createFileSystemWatcher(fileUri.fsPath);
+        watcher.onDidChange(() => this.reloadConfig(filename));
+        watcher.onDidCreate(() => this.reloadConfig(filename));
+        watcher.onDidDelete(() => this.reloadConfig(filename));
+        this.watchers.push(watcher);
+      },
+    );
   }
 
   private async reloadConfig(filename: string) {
     let configType: FileConfigType | undefined;
-
+    
     switch (filename) {
       case SYSTEM_PROMPT_FILE:
         await this.loadSystemPrompt();
-        configType = 'system-prompt';
+        configType = "systemPrompt";
         break;
       case QUICK_FIXES_FILE:
         await this.loadQuickFixes();
-        configType = 'commands';
+        configType = "quickFixes";
         break;
       case REWRITE_OPTIONS_FILE:
         await this.loadRewriteOptions();
-        configType = 'commands';
+        configType = "rewriteOptions";
         break;
     }
 
     if (configType && this.listeners.has(configType)) {
-      this.listeners.get(configType)!.forEach(listener => listener(configType));
+      this.listeners
+        .get(configType)!
+        .forEach((listener) => listener(configType));
     }
   }
 
-  getSystemPrompt(): string | undefined {
-    return this.systemPrompt;
-  }
-
-  getQuickFixes(): any[] | undefined {
-    return this.quickFixes;
-  }
-
-  getRewriteOptions(): any[] | undefined {
-    return this.rewriteOptions;
+  getConfig(type: FileConfigType) {
+    switch (type) {
+      case "systemPrompt":
+        return this.systemPrompt;
+      case "quickFixes":
+        return this.quickFixes;
+      case "rewriteOptions":
+        return this.rewriteOptions;
+    }
   }
 
   dispose() {
-    this.watchers.forEach(w => w.dispose());
+    this.watchers.forEach((w) => w.dispose());
   }
 
-  registerChangeListener(type: FileConfigType, listener: FileConfigChangeListener) {
+  registerChangeListener(
+    type: FileConfigType,
+    listener: FileConfigChangeListener,
+  ) {
     if (!this.listeners.has(type)) {
       this.listeners.set(type, []);
     }

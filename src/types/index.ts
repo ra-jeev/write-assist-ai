@@ -24,5 +24,5 @@ export type OpenAIConfig = {
 export type CommandsChangeListener = () => void;
 export type SecretChangeListener = (key: string) => void;
 
-export type FileConfigType = 'system-prompt' | 'commands';
+export type FileConfigType = 'systemPrompt' | 'quickFixes' | 'rewriteOptions';
 export type FileConfigChangeListener = (type: FileConfigType) => void;
