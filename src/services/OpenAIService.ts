@@ -1,5 +1,5 @@
 import { OpenAI, APIError } from 'openai';
-import type { OpenAIConfig } from '../types';
+import type { LanguageConfig, OpenAIConfig } from '../types';
 
 const ERROR_MESSAGES = {
   NO_API_KEY: 'No API key provided.',
@@ -11,14 +11,16 @@ const ERROR_MESSAGES = {
 export class OpenAIService {
   private readonly openAiSvc: OpenAI;
   private _config: OpenAIConfig;
+  private _systemPrompt: LanguageConfig<string>;
 
-  constructor(apiKey: string, config: OpenAIConfig, proxyUrl?: string) {
+  constructor(apiKey: string, config: OpenAIConfig, systemPrompt:LanguageConfig<string>, proxyUrl?: string) {
     this.openAiSvc = new OpenAI({
       apiKey,
       baseURL: proxyUrl,
     });
 
     this._config = config;
+    this._systemPrompt = systemPrompt;
   }
 
   set config(config: OpenAIConfig) {
@@ -26,11 +28,11 @@ export class OpenAIService {
   }
 
   getSystemPrompt(languageId: string) {
-    if (languageId in this._config.systemPrompt) {
-      return this._config.systemPrompt[languageId];
+    if (languageId in this._systemPrompt) {
+      return this._systemPrompt[languageId];
     }
 
-    return this._config.systemPrompt.default;
+    return this._systemPrompt.default;
   }
 
   async createChatCompletion(
@@ -50,7 +52,7 @@ export class OpenAIService {
       }
 
       const userPrompt = `${cmdPrompt}${cmdPrompt.endsWith(':') ? '\n\n' : ':\n\n'
-        }${text}`;
+      }${text}`;
       messages.push({ role: 'user', content: userPrompt });
 
       const response = await this.openAiSvc.chat.completions.create({

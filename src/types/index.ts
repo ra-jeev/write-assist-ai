@@ -19,7 +19,6 @@ export type OpenAIConfig = {
   model: string;
   maxTokens: number;
   temperature: number;
-  systemPrompt: LanguageConfig<string>;
 };
 
 export type CommandsChangeListener = () => void;

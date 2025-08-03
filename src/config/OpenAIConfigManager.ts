@@ -7,7 +7,7 @@ import {
   DEFAULT_TEMPERATURE,
   DEFAULT_MODEL,
 } from '../constants';
-import type { OpenAIConfig } from '../types';
+import type { LanguageConfig, OpenAIConfig } from '../types';
 
 export class OpenAIConfigManager {
   private changeListener: ((resetOpenAISvc: boolean) => any) | undefined;
@@ -57,11 +57,6 @@ export class OpenAIConfigManager {
       DEFAULT_TEMPERATURE
     );
 
-    const systemPrompt = this.config.getConfiguration<string>(
-      ConfigurationKeys.systemPrompt,
-      ''
-    );
-
     let model = this.config.getConfiguration<string>(
       ConfigurationKeys.model,
       DEFAULT_MODEL
@@ -82,14 +77,20 @@ export class OpenAIConfigManager {
       maxTokens: maxTokens.default,
       model: model.default,
       temperature: temperature.default,
-      systemPrompt,
     };
   }
 
-  getProxyUrl(): string | undefined {
+  getProxyUrl(): string {
     return this.config.getConfiguration<string>(ConfigurationKeys.proxyUrl, '')
       .default;
   }
+
+  getSystemPrompt(): LanguageConfig<string> {
+    return this.config.getConfiguration<string>(
+      ConfigurationKeys.systemPrompt,
+      ''
+    );
+  };
 
   hasConfigChanged(event: ConfigurationChangeEvent): boolean {
     return (

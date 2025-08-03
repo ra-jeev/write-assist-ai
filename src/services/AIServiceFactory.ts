@@ -23,6 +23,7 @@ export class AIServiceFactory {
       this.openAIService = new OpenAIService(
         apiKey,
         this.config.getOpenAIConfig(),
+        this.config.getSystemPrompt(),
         this.config.getOpenAIProxyUrl()
       );
     }

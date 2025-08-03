@@ -99,7 +99,11 @@ export class ExtensionConfig {
     return this.openAIConfig.getConfig();
   }
 
-  getOpenAIProxyUrl(): string | undefined {
+  getSystemPrompt(): LanguageConfig<string> {
+    return this.openAIConfig.getSystemPrompt();
+  }
+
+  getOpenAIProxyUrl(): string {
     return this.openAIConfig.getProxyUrl();
   }
 
