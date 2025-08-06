@@ -110,15 +110,15 @@ export class FileConfigManager {
     switch (filename) {
       case SYSTEM_PROMPT_FILE:
         await this.loadSystemPrompt();
-        configType = 'systemPrompt';
+        configType = ConfigurationKeys.systemPrompt;
         break;
       case QUICK_FIXES_FILE:
         await this.loadQuickFixes();
-        configType = 'quickFixes';
+        configType = ConfigurationKeys.quickFixes;
         break;
       case REWRITE_OPTIONS_FILE:
         await this.loadRewriteOptions();
-        configType = 'rewriteOptions';
+        configType = ConfigurationKeys.rewriteOptions;
         break;
     }
 

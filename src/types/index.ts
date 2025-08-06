@@ -1,3 +1,5 @@
+import { ConfigurationKeys } from '../constants';
+
 export type WritingAction = {
   id: string;
   title: string;
@@ -24,7 +26,7 @@ export type OpenAIConfig = {
 export type CommandsChangeListener = () => void;
 export type SecretChangeListener = (key: string) => void;
 
-export type FileConfigType = 'systemPrompt' | 'quickFixes' | 'rewriteOptions';
+export type FileConfigType = ConfigurationKeys.systemPrompt | ConfigurationKeys.quickFixes | ConfigurationKeys.rewriteOptions;
 export type FileConfigChangeListener = (type: FileConfigType) => void;
 
 export type OpenAIConfigChangeType = 'reset' | 'config' | 'systemPrompt'

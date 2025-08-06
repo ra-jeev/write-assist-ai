@@ -146,17 +146,17 @@ export class ExtensionConfig {
     );
 
     this.fileConfigManager.registerChangeListener(
-      'systemPrompt',
+      ConfigurationKeys.systemPrompt,
       () => this.openAIConfig.onSystemPromptFileChanged()
     );
 
     this.fileConfigManager.registerChangeListener(
-      'quickFixes',
+      ConfigurationKeys.quickFixes,
       () => this.cmdsChangeListener()
     );
 
     this.fileConfigManager.registerChangeListener(
-      'rewriteOptions',
+      ConfigurationKeys.rewriteOptions,
       () => this.cmdsChangeListener()
     );
   }
