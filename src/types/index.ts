@@ -7,7 +7,7 @@ export type WritingAction = {
 
 export type ExtensionActions = {
   quickFixes: LanguageConfig<WritingAction[]>;
-  rewriteActions: LanguageConfig<WritingAction[]>;
+  rewriteOptions: LanguageConfig<WritingAction[]>;
 };
 
 export type LanguageConfig<T> = {

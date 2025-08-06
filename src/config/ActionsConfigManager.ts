@@ -10,7 +10,7 @@ export class ActionsConfigManager {
   getActions(): ExtensionActions {
     return {
       quickFixes: this.getActionsType(ConfigurationKeys.quickFixes),
-      rewriteActions: this.getActionsType(ConfigurationKeys.rewriteOptions),
+      rewriteOptions: this.getActionsType(ConfigurationKeys.rewriteOptions),
     };
   }
 

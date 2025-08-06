@@ -74,7 +74,7 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     const actionsFromConfig = this.config.getActions();
 
     this.prepareActionKind(
-      actionsFromConfig.rewriteActions,
+      actionsFromConfig.rewriteOptions,
       CodeActionKind.RefactorRewrite
     );
 
