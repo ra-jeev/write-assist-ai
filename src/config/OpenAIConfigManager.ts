@@ -86,6 +86,11 @@ export class OpenAIConfigManager {
   }
 
   getSystemPrompt(): LanguageConfig<string> {
+    const fileSystemPrompt = this.config.getFileConfig('systemPrompt');
+    if (fileSystemPrompt) {
+      return { default: fileSystemPrompt };
+    }
+    
     return this.config.getConfiguration<string>(
       ConfigurationKeys.systemPrompt,
       ''
@@ -119,6 +124,12 @@ export class OpenAIConfigManager {
   onApiKeyChanged() {
     if (this.changeListener) {
       this.changeListener('reset');
+    }
+  }
+
+  onSystemPromptFileChanged() {
+    if (this.changeListener) {
+      this.changeListener('systemPrompt');
     }
   }
 }

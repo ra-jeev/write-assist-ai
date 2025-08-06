@@ -2,11 +2,13 @@ import { ExtensionContext, workspace, ConfigurationChangeEvent } from 'vscode';
 import { OpenAIConfigManager } from './OpenAIConfigManager';
 import { ActionsConfigManager } from './ActionsConfigManager';
 import { SecretsManager } from './SecretsManager';
+import { FileConfigManager } from './FileConfigManager';
 import { isConfigChanged } from './ConfigUtils';
 import { CONFIG_SECTION_KEY, ConfigurationKeys } from '../constants';
 import type {
   CommandsChangeListener,
   ExtensionActions,
+  FileConfigType,
   LanguageConfig,
   OpenAIConfig,
   OpenAIConfigChangeListener,
@@ -16,6 +18,7 @@ export class ExtensionConfig {
   private openAIConfig: OpenAIConfigManager;
   private actionsConfig: ActionsConfigManager;
   private secretsManager: SecretsManager;
+  private fileConfigManager: FileConfigManager;
   private separator = '';
   private useAcceptRejectFlow = true;
 
@@ -26,13 +29,9 @@ export class ExtensionConfig {
     this.secretsManager = new SecretsManager(this.context);
     this.openAIConfig = new OpenAIConfigManager(this);
     this.actionsConfig = new ActionsConfigManager(this);
+    this.fileConfigManager = new FileConfigManager();
 
-    this.registerConfigChangeListener();
-    this.secretsManager.registerChangeListener(
-      ConfigurationKeys.openAiApiKey,
-      () => this.openAIConfig.onApiKeyChanged()
-    );
-
+    this.registerAllListeners();
     this.updateUseAcceptRejectFlow();
     this.initSeparator();
   }
@@ -91,9 +90,13 @@ export class ExtensionConfig {
   getSecret(key: string): Promise<string | undefined> {
     return this.secretsManager.getSecret(key);
   }
-  
+
   setSecret(key: string, value: string): Promise<void> {
     return this.secretsManager.storeSecret(key, value);
+  }
+
+  getFileConfig(type: FileConfigType): string | undefined {
+    return this.fileConfigManager.getConfig(type);
   }
 
   getOpenAIConfig(): OpenAIConfig {
@@ -132,6 +135,30 @@ export class ExtensionConfig {
     listener: OpenAIConfigChangeListener
   ) {
     this.openAIConfig.registerChangeListener(listener);
+  }
+
+  private registerAllListeners() {
+    this.registerConfigChangeListener();
+
+    this.secretsManager.registerChangeListener(
+      ConfigurationKeys.openAiApiKey,
+      () => this.openAIConfig.onApiKeyChanged()
+    );
+
+    this.fileConfigManager.registerChangeListener(
+      'systemPrompt',
+      () => this.openAIConfig.onSystemPromptFileChanged()
+    );
+
+    this.fileConfigManager.registerChangeListener(
+      'quickFixes',
+      () => this.cmdsChangeListener()
+    );
+
+    this.fileConfigManager.registerChangeListener(
+      'rewriteOptions',
+      () => this.cmdsChangeListener()
+    );
   }
 
   private registerConfigChangeListener() {
