@@ -104,21 +104,21 @@ export class ExtensionManager {
     this.context.subscriptions.push(
       commands.registerCommand(
         CREATE_SYSTEM_PROMPT_FILE_CMD,
-        () => this.config.createSystemPromptFile,
+        () => this.config.createSystemPromptFile(),
       ),
     );
 
     this.context.subscriptions.push(
       commands.registerCommand(
         CREATE_QUICK_FIXES_FILE_CMD,
-        () => this.config.createQuickFixesFile,
+        () => this.config.createQuickFixesFile(),
       ),
     );
 
     this.context.subscriptions.push(
       commands.registerCommand(
         CREATE_REWRITE_OPTIONS_FILE_CMD,
-        () => this.config.createRewriteOptionsFile,
+        () => this.config.createRewriteOptionsFile(),
       ),
     );
   }
