@@ -13,7 +13,12 @@ export class OpenAIService {
   private _config: OpenAIConfig;
   private _systemPrompt: LanguageConfig<string>;
 
-  constructor(apiKey: string, config: OpenAIConfig, systemPrompt:LanguageConfig<string>, proxyUrl?: string) {
+  constructor(
+    apiKey: string,
+    config: OpenAIConfig,
+    systemPrompt: LanguageConfig<string>,
+    proxyUrl?: string,
+  ) {
     this.openAiSvc = new OpenAI({
       apiKey,
       baseURL: proxyUrl,
@@ -42,7 +47,7 @@ export class OpenAIService {
   async createChatCompletion(
     cmdPrompt: string,
     text: string,
-    languageId: string
+    languageId: string,
   ): Promise<string> {
     try {
       const messages: OpenAI.ChatCompletionMessageParam[] = [];
@@ -55,7 +60,8 @@ export class OpenAIService {
         });
       }
 
-      const userPrompt = `${cmdPrompt}${cmdPrompt.endsWith(':') ? '\n\n' : ':\n\n'
+      const userPrompt = `${cmdPrompt}${
+        cmdPrompt.endsWith(':') ? '\n\n' : ':\n\n'
       }${text}`;
       messages.push({ role: 'user', content: userPrompt });
 

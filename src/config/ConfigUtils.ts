@@ -3,7 +3,7 @@ import { CONFIG_SECTION_KEY } from '../constants';
 
 export function isConfigChanged(
   event: ConfigurationChangeEvent,
-  key: string
+  key: string,
 ): boolean {
   return event.affectsConfiguration(`${CONFIG_SECTION_KEY}.${key}`);
 }

@@ -21,19 +21,23 @@ import {
 
 import { AIServiceFactory } from './services/AIServiceFactory';
 import { ExtensionConfig } from './config/ExtensionConfig';
-import { ACCEPT_REPHRASE_CMD, CONFIG_SECTION_KEY, REJECT_REPHRASE_CMD } from './constants';
+import {
+  ACCEPT_REPHRASE_CMD,
+  CONFIG_SECTION_KEY,
+  REJECT_REPHRASE_CMD,
+} from './constants';
 import type { LanguageConfig, WritingAction } from './types';
 
 type DecorationWithRange = {
   range: Range;
   decoration: TextEditorDecorationType;
-}
+};
 
 type RephraseTask = {
   document: TextDocument;
   original?: DecorationWithRange;
   rephrased?: DecorationWithRange;
-}
+};
 
 const InfoMessages = {
   AI_SERVICE_ERROR: 'Error initializing AI service.',
@@ -61,7 +65,7 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
 
   constructor(
     private readonly config: ExtensionConfig,
-    private readonly aiServiceFactory: AIServiceFactory
+    private readonly aiServiceFactory: AIServiceFactory,
   ) {
     this.prepareActionsFromConfig();
   }
@@ -75,18 +79,18 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
 
     this.prepareActionKind(
       actionsFromConfig.rewriteOptions,
-      CodeActionKind.RefactorRewrite
+      CodeActionKind.RefactorRewrite,
     );
 
     this.prepareActionKind(
       actionsFromConfig.quickFixes,
-      CodeActionKind.QuickFix
+      CodeActionKind.QuickFix,
     );
   }
 
   prepareActionKind(
     writingActions: LanguageConfig<WritingAction[]>,
-    actionKind: CodeActionKind
+    actionKind: CodeActionKind,
   ) {
     for (const languageId in writingActions) {
       if (!(languageId in this.actions)) {
@@ -105,7 +109,7 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
 
   createAction(
     writingAction: WritingAction,
-    actionKind: CodeActionKind
+    actionKind: CodeActionKind,
   ): CodeAction {
     const action = new CodeAction(writingAction.title, actionKind);
     action.command = {
@@ -120,7 +124,7 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
 
   provideCodeActions(
     document: TextDocument,
-    range: Range
+    range: Range,
   ): CodeAction[] | undefined {
     // If nothing is selected, or if the previous action is
     // already under progress, then don't provide any action
@@ -132,7 +136,11 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
 
     actions.forEach((action) => {
       if (action.command?.arguments?.length) {
-        action.command.arguments = [action.command.arguments[0], document, range];
+        action.command.arguments = [
+          action.command.arguments[0],
+          document,
+          range,
+        ];
       }
     });
 
@@ -148,7 +156,12 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     return editor;
   }
 
-  async insertText(document: TextDocument, location: Position, text: string, addSeparator = true) {
+  async insertText(
+    document: TextDocument,
+    location: Position,
+    text: string,
+    addSeparator = true,
+  ) {
     let textWithSeparator = ['', text];
     let newLinesAdded = 1;
 
@@ -167,7 +180,11 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     }
 
     const edit = new WorkspaceEdit();
-    edit.insert(Uri.parse(document.uri.toString()), location, textWithSeparator.join('\n'));
+    edit.insert(
+      Uri.parse(document.uri.toString()),
+      location,
+      textWithSeparator.join('\n'),
+    );
 
     const response = await workspace.applyEdit(edit);
     if (response) {
@@ -176,7 +193,10 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
       const startLine = location.line + newLinesAdded;
       const endLine = startLine + lines.length - 1;
 
-      return new Range(new Position(startLine, 0), new Position(endLine, lines[lines.length - 1].length));
+      return new Range(
+        new Position(startLine, 0),
+        new Position(endLine, lines[lines.length - 1].length),
+      );
     }
   }
 
@@ -196,14 +216,19 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
 
   applyDecorations(
     editor: TextEditor,
-    decorations: { type: 'original' | 'rephrased', range: Range, decorationOptions: DecorationRenderOptions }[]
+    decorations: {
+      type: 'original' | 'rephrased';
+      range: Range;
+      decorationOptions: DecorationRenderOptions;
+    }[],
   ) {
     this.activeRephrase = {
       document: editor.document,
     };
 
     for (const { type, range, decorationOptions } of decorations) {
-      const decorationType = window.createTextEditorDecorationType(decorationOptions);
+      const decorationType =
+        window.createTextEditorDecorationType(decorationOptions);
       this.activeRephrase[type] = {
         range,
         decoration: decorationType,
@@ -232,141 +257,167 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     }
 
     // Show loading indicator while getting rephrased text
-    await window.withProgress({
-      location: ProgressLocation.Notification,
-      title: InfoMessages.GENERATING_REPHRASE,
-      cancellable: true
-    }, async (progress, token) => {
-      // Listen for cancellation
-      token.onCancellationRequested(() => {
-        window.showInformationMessage(InfoMessages.REPHRASE_CANCELLED);
-        return;
-      });
-
-      progress.report({ increment: 30 });
-
-      try {
-        const originalText = document.getText(range);
-        const rephrasedText = await openAIService.createChatCompletion(
-          prompt,
-          originalText,
-          document.languageId
-        );
-
-        if (token.isCancellationRequested) {
-          // Simply return if the task was cancelled
-          this.currentlyProcessing = false;
+    await window.withProgress(
+      {
+        location: ProgressLocation.Notification,
+        title: InfoMessages.GENERATING_REPHRASE,
+        cancellable: true,
+      },
+      async (progress, token) => {
+        // Listen for cancellation
+        token.onCancellationRequested(() => {
+          window.showInformationMessage(InfoMessages.REPHRASE_CANCELLED);
           return;
-        }
+        });
 
-        progress.report({ increment: 70 });
+        progress.report({ increment: 30 });
 
-        const useAcceptRejectFlow = this.config.getUseAcceptRejectFlow();
-        const editor = this.getEditorIfValid(document);
-        if (editor && useAcceptRejectFlow) {
-          editor.selection = new Selection(range.end, range.end);
+        try {
+          const originalText = document.getText(range);
+          const rephrasedText = await openAIService.createChatCompletion(
+            prompt,
+            originalText,
+            document.languageId,
+          );
 
-          const rephrasedRange = await this.insertText(document, range.end, rephrasedText, false);
-          if (rephrasedRange) {
-            this.applyDecorations(editor, [
-              {
-                type: 'original',
-                range,
-                decorationOptions: {
-                  backgroundColor: 'rgba(255, 182, 193, 0.2)',
-                  border: '1px solid red',
-                  isWholeLine: true,
-                },
-              },
-              {
-                type: 'rephrased',
-                range: rephrasedRange,
-                decorationOptions: {
-                  backgroundColor: 'rgba(144, 255, 144, 0.2)',
-                  border: '1px solid green',
-                  isWholeLine: true,
-                },
-              }
-            ]);
-
-            // Trigger codelens refresh to show buttons
-            this.codeLensEventEmitter.fire();
+          if (token.isCancellationRequested) {
+            // Simply return if the task was cancelled
+            this.currentlyProcessing = false;
+            return;
           }
-        } else {
-          // If no valid editor is found, or if accept/reject flow is disabled
-          // then directly insert the rephrased text
-          await this.insertText(document, range.end, rephrasedText);
+
+          progress.report({ increment: 70 });
+
+          const useAcceptRejectFlow = this.config.getUseAcceptRejectFlow();
+          const editor = this.getEditorIfValid(document);
+          if (editor && useAcceptRejectFlow) {
+            editor.selection = new Selection(range.end, range.end);
+
+            const rephrasedRange = await this.insertText(
+              document,
+              range.end,
+              rephrasedText,
+              false,
+            );
+            if (rephrasedRange) {
+              this.applyDecorations(editor, [
+                {
+                  type: 'original',
+                  range,
+                  decorationOptions: {
+                    backgroundColor: 'rgba(255, 182, 193, 0.2)',
+                    border: '1px solid red',
+                    isWholeLine: true,
+                  },
+                },
+                {
+                  type: 'rephrased',
+                  range: rephrasedRange,
+                  decorationOptions: {
+                    backgroundColor: 'rgba(144, 255, 144, 0.2)',
+                    border: '1px solid green',
+                    isWholeLine: true,
+                  },
+                },
+              ]);
+
+              // Trigger codelens refresh to show buttons
+              this.codeLensEventEmitter.fire();
+            }
+          } else {
+            // If no valid editor is found, or if accept/reject flow is disabled
+            // then directly insert the rephrased text
+            await this.insertText(document, range.end, rephrasedText);
+          }
+        } catch (error) {
+          let errorMessage = InfoMessages.REPHRASE_ERROR;
+          if (error instanceof Error) {
+            errorMessage = error.message;
+          }
+
+          window.showErrorMessage(errorMessage);
+
+          await this.cleanupRephrase();
         }
-      } catch (error) {
-        let errorMessage = InfoMessages.REPHRASE_ERROR;
-        if (error instanceof Error) {
-          errorMessage = error.message;
-        }
 
-        window.showErrorMessage(errorMessage);
-
-        await this.cleanupRephrase();
-      }
-
-      this.currentlyProcessing = false;
-    });
+        this.currentlyProcessing = false;
+      },
+    );
   }
 
   provideCodeLenses(document: TextDocument): CodeLens[] {
     const codeLenses: CodeLens[] = [];
 
-    if (!this.activeRephrase ||
+    if (
+      !this.activeRephrase ||
       this.activeRephrase.document.uri.toString() !== document.uri.toString() ||
-      !this.activeRephrase.original || !this.activeRephrase.rephrased) {
+      !this.activeRephrase.original ||
+      !this.activeRephrase.rephrased
+    ) {
       return codeLenses;
     }
 
     const lensRange = new Range(
-      this.activeRephrase.rephrased.range.end.line + 1, 0,
-      this.activeRephrase.rephrased.range.end.line + 1, 0
+      this.activeRephrase.rephrased.range.end.line + 1,
+      0,
+      this.activeRephrase.rephrased.range.end.line + 1,
+      0,
     );
 
-    codeLenses.push(new CodeLens(
-      lensRange,
-      {
+    codeLenses.push(
+      new CodeLens(lensRange, {
         title: '$(check) Accept',
         command: ACCEPT_REPHRASE_CMD,
-        arguments: []
-      }
-    ));
+        arguments: [],
+      }),
+    );
 
-    codeLenses.push(new CodeLens(
-      lensRange,
-      {
+    codeLenses.push(
+      new CodeLens(lensRange, {
         title: '$(x) Reject',
         command: REJECT_REPHRASE_CMD,
-        arguments: []
-      }
-    ));
+        arguments: [],
+      }),
+    );
 
     return codeLenses;
   }
 
   async deleteRephrase(document: TextDocument, rephrasedRange: Range) {
     const deleteRange = new Range(
-      rephrasedRange.start.line, rephrasedRange.start.character,
-      rephrasedRange.end.line + 1, 0
+      rephrasedRange.start.line,
+      rephrasedRange.start.character,
+      rephrasedRange.end.line + 1,
+      0,
     );
 
     await this.deleteRange(document, deleteRange);
   }
 
   async acceptRephrase() {
-    if (!this.activeRephrase || !this.activeRephrase.original || !this.activeRephrase.rephrased) {
+    if (
+      !this.activeRephrase ||
+      !this.activeRephrase.original ||
+      !this.activeRephrase.rephrased
+    ) {
       return;
     }
 
     try {
-      const rephrasedText = this.activeRephrase.document.getText(this.activeRephrase.rephrased.range);
+      const rephrasedText = this.activeRephrase.document.getText(
+        this.activeRephrase.rephrased.range,
+      );
 
-      await this.replaceText(this.activeRephrase.document, this.activeRephrase.original.range, rephrasedText);
+      await this.replaceText(
+        this.activeRephrase.document,
+        this.activeRephrase.original.range,
+        rephrasedText,
+      );
 
-      this.deleteRephrase(this.activeRephrase.document, this.activeRephrase.rephrased.range);
+      this.deleteRephrase(
+        this.activeRephrase.document,
+        this.activeRephrase.rephrased.range,
+      );
     } catch (error) {
       let errorMessage = InfoMessages.REPHRASE_ACCEPT_ERROR;
       if (error instanceof Error) {
@@ -380,12 +431,19 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
   }
 
   async rejectRephrase() {
-    if (!this.activeRephrase || !this.activeRephrase.original || !this.activeRephrase.rephrased) {
+    if (
+      !this.activeRephrase ||
+      !this.activeRephrase.original ||
+      !this.activeRephrase.rephrased
+    ) {
       return;
     }
 
     try {
-      await this.deleteRephrase(this.activeRephrase.document, this.activeRephrase.rephrased.range);
+      await this.deleteRephrase(
+        this.activeRephrase.document,
+        this.activeRephrase.rephrased.range,
+      );
     } catch (error) {
       let errorMessage = InfoMessages.REPHRASE_REJECT_ERROR;
       if (error instanceof Error) {
@@ -399,7 +457,11 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
   }
 
   private async cleanupRephrase() {
-    if (!this.activeRephrase || !this.activeRephrase.original || !this.activeRephrase.rephrased) {
+    if (
+      !this.activeRephrase ||
+      !this.activeRephrase.original ||
+      !this.activeRephrase.rephrased
+    ) {
       return;
     }
 

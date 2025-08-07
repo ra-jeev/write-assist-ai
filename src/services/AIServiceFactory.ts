@@ -7,7 +7,7 @@ export class AIServiceFactory {
 
   constructor(private config: ExtensionConfig) {
     this.config.registerOpenAiConfigChangeListener(
-      this.onConfigChange.bind(this)
+      this.onConfigChange.bind(this),
     );
   }
 
@@ -17,7 +17,9 @@ export class AIServiceFactory {
       if (!apiKey) {
         apiKey = await this.config.promptUserForApiKey();
         if (!apiKey) {
-          throw new Error('Error: Couldn\'t initialize AI service, no API key provided.');
+          throw new Error(
+            'Error: Couldn\'t initialize AI service, no API key provided.',
+          );
         }
       }
 
@@ -25,7 +27,7 @@ export class AIServiceFactory {
         apiKey,
         this.config.getOpenAIConfig(),
         this.config.getSystemPrompt(),
-        this.config.getOpenAIProxyUrl()
+        this.config.getOpenAIProxyUrl(),
       );
     }
 

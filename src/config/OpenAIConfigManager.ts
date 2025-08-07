@@ -7,13 +7,17 @@ import {
   DEFAULT_TEMPERATURE,
   DEFAULT_MODEL,
 } from '../constants';
-import type { LanguageConfig, OpenAIConfig, OpenAIConfigChangeListener } from '../types';
+import type {
+  LanguageConfig,
+  OpenAIConfig,
+  OpenAIConfigChangeListener,
+} from '../types';
 
 export class OpenAIConfigManager {
   private changeListener: OpenAIConfigChangeListener | undefined;
   private apiKey: string | undefined;
 
-  constructor(private readonly config: ExtensionConfig) { }
+  constructor(private readonly config: ExtensionConfig) {}
 
   async getApiKey(): Promise<string | undefined> {
     if (!this.apiKey) {
@@ -38,10 +42,7 @@ export class OpenAIConfigManager {
       return;
     }
 
-    await this.config.setSecret(
-      ConfigurationKeys.openAiApiKey,
-      apiKey
-    );
+    await this.config.setSecret(ConfigurationKeys.openAiApiKey, apiKey);
 
     return apiKey;
   }
@@ -49,23 +50,23 @@ export class OpenAIConfigManager {
   getConfig(): OpenAIConfig {
     const maxTokens = this.config.getConfiguration<number>(
       ConfigurationKeys.maxTokens,
-      DEFAULT_MAX_TOKENS
+      DEFAULT_MAX_TOKENS,
     );
 
     const temperature = this.config.getConfiguration<number>(
       ConfigurationKeys.temperature,
-      DEFAULT_TEMPERATURE
+      DEFAULT_TEMPERATURE,
     );
 
     let model = this.config.getConfiguration<string>(
       ConfigurationKeys.model,
-      DEFAULT_MODEL
+      DEFAULT_MODEL,
     );
 
     if (model.default === 'custom') {
       model = this.config.getConfiguration<string>(
         ConfigurationKeys.customModel,
-        DEFAULT_MODEL
+        DEFAULT_MODEL,
       );
 
       if (!model.default) {
@@ -90,12 +91,12 @@ export class OpenAIConfigManager {
     if (fileSystemPrompt) {
       return { default: fileSystemPrompt };
     }
-    
+
     return this.config.getConfiguration<string>(
       ConfigurationKeys.systemPrompt,
-      ''
+      '',
     );
-  };
+  }
 
   hasConfigChanged(event: ConfigurationChangeEvent): boolean {
     return (
@@ -110,10 +111,22 @@ export class OpenAIConfigManager {
 
   notifyConfigChanged(event: ConfigurationChangeEvent) {
     if (this.changeListener) {
-      const isProxyUrlChange = isConfigChanged(event, ConfigurationKeys.proxyUrl);
-      const isSystemPromptChange = isConfigChanged(event, ConfigurationKeys.systemPrompt);
+      const isProxyUrlChange = isConfigChanged(
+        event,
+        ConfigurationKeys.proxyUrl,
+      );
+      const isSystemPromptChange = isConfigChanged(
+        event,
+        ConfigurationKeys.systemPrompt,
+      );
 
-      this.changeListener(isProxyUrlChange ? 'reset' : isSystemPromptChange ? 'systemPrompt' : 'config');
+      this.changeListener(
+        isProxyUrlChange
+          ? 'reset'
+          : isSystemPromptChange
+            ? 'systemPrompt'
+            : 'config',
+      );
     }
   }
 

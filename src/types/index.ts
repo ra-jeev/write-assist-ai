@@ -26,8 +26,11 @@ export type OpenAIConfig = {
 export type CommandsChangeListener = () => void;
 export type SecretChangeListener = (key: string) => void;
 
-export type FileConfigType = ConfigurationKeys.systemPrompt | ConfigurationKeys.quickFixes | ConfigurationKeys.rewriteOptions;
+export type FileConfigType =
+  | ConfigurationKeys.systemPrompt
+  | ConfigurationKeys.quickFixes
+  | ConfigurationKeys.rewriteOptions;
 export type FileConfigChangeListener = (type: FileConfigType) => void;
 
-export type OpenAIConfigChangeType = 'reset' | 'config' | 'systemPrompt'
-export type OpenAIConfigChangeListener = (type: OpenAIConfigChangeType) => void
+export type OpenAIConfigChangeType = 'reset' | 'config' | 'systemPrompt';
+export type OpenAIConfigChangeListener = (type: OpenAIConfigChangeType) => void;

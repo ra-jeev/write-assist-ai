@@ -24,7 +24,7 @@ export class ExtensionConfig {
 
   constructor(
     private readonly context: ExtensionContext,
-    private readonly cmdsChangeListener: CommandsChangeListener
+    private readonly cmdsChangeListener: CommandsChangeListener,
   ) {
     this.secretsManager = new SecretsManager(this.context);
     this.openAIConfig = new OpenAIConfigManager(this);
@@ -39,14 +39,14 @@ export class ExtensionConfig {
   private initSeparator() {
     this.separator = this.getConfiguration(
       ConfigurationKeys.separator,
-      ''
+      '',
     ).default;
   }
 
   private updateUseAcceptRejectFlow() {
     this.useAcceptRejectFlow = this.getConfiguration(
       ConfigurationKeys.useAcceptRejectFlow,
-      true
+      true,
     ).default;
   }
 
@@ -131,9 +131,7 @@ export class ExtensionConfig {
     return this.openAIConfig.promptUserForApiKey();
   }
 
-  registerOpenAiConfigChangeListener(
-    listener: OpenAIConfigChangeListener
-  ) {
+  registerOpenAiConfigChangeListener(listener: OpenAIConfigChangeListener) {
     this.openAIConfig.registerChangeListener(listener);
   }
 
@@ -142,28 +140,28 @@ export class ExtensionConfig {
 
     this.secretsManager.registerChangeListener(
       ConfigurationKeys.openAiApiKey,
-      () => this.openAIConfig.onApiKeyChanged()
+      () => this.openAIConfig.onApiKeyChanged(),
     );
 
     this.fileConfigManager.registerChangeListener(
       ConfigurationKeys.systemPrompt,
-      () => this.openAIConfig.onSystemPromptFileChanged()
+      () => this.openAIConfig.onSystemPromptFileChanged(),
     );
 
     this.fileConfigManager.registerChangeListener(
       ConfigurationKeys.quickFixes,
-      () => this.cmdsChangeListener()
+      () => this.cmdsChangeListener(),
     );
 
     this.fileConfigManager.registerChangeListener(
       ConfigurationKeys.rewriteOptions,
-      () => this.cmdsChangeListener()
+      () => this.cmdsChangeListener(),
     );
   }
 
   private registerConfigChangeListener() {
     workspace.onDidChangeConfiguration((event) =>
-      this.onConfigurationChanged(event)
+      this.onConfigurationChanged(event),
     );
   }
 
