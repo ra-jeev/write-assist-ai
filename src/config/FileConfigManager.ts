@@ -1,6 +1,4 @@
 import { workspace, Uri, FileSystemWatcher, window } from 'vscode';
-import fs from 'fs/promises';
-import path from 'path';
 
 import {
   CONFIG_DIR,
@@ -18,119 +16,101 @@ export class FileConfigManager {
   private listeners: Map<FileConfigType, FileConfigChangeListener[]> =
     new Map();
 
-  private workspaceFolder: string | undefined;
+  private workspaceFolderUri: Uri | undefined;
   private watchers: FileSystemWatcher[] = [];
   private systemPrompt: string | undefined;
   private quickFixes: string | undefined;
   private rewriteOptions: string | undefined;
 
+  private readonly configMap = {
+    [SYSTEM_PROMPT_FILE]: ConfigurationKeys.systemPrompt,
+    [QUICK_FIXES_FILE]: ConfigurationKeys.quickFixes,
+    [REWRITE_OPTIONS_FILE]: ConfigurationKeys.rewriteOptions,
+  } as const;
+
   constructor() {
-    this.workspaceFolder = workspace.workspaceFolders?.[0]?.uri.fsPath;
-    this.init();
+    this.workspaceFolderUri = workspace.workspaceFolders?.[0]?.uri;
+    this.initialize();
   }
 
-  private async init() {
+  private async initialize() {
     await this.loadAllConfigs();
     this.setupWatchers();
   }
 
-  private getConfigFilePath(filename: string): string | undefined {
-    if (!this.workspaceFolder) {
+  private getConfigFileUri(filename: string): Uri | undefined {
+    if (!this.workspaceFolderUri) {
       return undefined;
     }
 
-    return path.join(this.workspaceFolder, CONFIG_DIR, filename);
+    return Uri.joinPath(this.workspaceFolderUri, CONFIG_DIR, filename);
+  }
+
+  private async loadConfig(filename: string, configType: FileConfigType) {
+    const fileUri = this.getConfigFileUri(filename);
+    if (!fileUri) {
+      this.setConfigValue(configType, undefined);
+      return;
+    }
+
+    try {
+      const content = await workspace.fs.readFile(fileUri);
+      this.setConfigValue(configType, new TextDecoder().decode(content));
+    } catch {
+      this.setConfigValue(configType, undefined);
+    }
+  }
+
+  private setConfigValue(type: FileConfigType, value: string | undefined) {
+    switch (type) {
+      case ConfigurationKeys.systemPrompt:
+        this.systemPrompt = value;
+        break;
+      case ConfigurationKeys.quickFixes:
+        this.quickFixes = value;
+        break;
+      case ConfigurationKeys.rewriteOptions:
+        this.rewriteOptions = value;
+        break;
+    }
   }
 
   private async loadAllConfigs() {
     await Promise.all([
-      this.loadSystemPrompt(),
-      this.loadQuickFixes(),
-      this.loadRewriteOptions(),
+      this.loadConfig(SYSTEM_PROMPT_FILE, ConfigurationKeys.systemPrompt),
+      this.loadConfig(QUICK_FIXES_FILE, ConfigurationKeys.quickFixes),
+      this.loadConfig(REWRITE_OPTIONS_FILE, ConfigurationKeys.rewriteOptions),
     ]);
   }
 
-  async loadSystemPrompt() {
-    const filePath = this.getConfigFilePath(SYSTEM_PROMPT_FILE);
-    if (!filePath) {
-      return;
-    }
-
-    try {
-      this.systemPrompt = await fs.readFile(filePath, 'utf8');
-    } catch {
-      this.systemPrompt = undefined;
-    }
-  }
-
-  async loadQuickFixes() {
-    const filePath = this.getConfigFilePath(QUICK_FIXES_FILE);
-    if (!filePath) {
-      return;
-    }
-
-    try {
-      this.quickFixes = await fs.readFile(filePath, 'utf8');
-    } catch {
-      this.quickFixes = undefined;
-    }
-  }
-
-  async loadRewriteOptions() {
-    const filePath = this.getConfigFilePath(REWRITE_OPTIONS_FILE);
-    if (!filePath) {
-      return;
-    }
-
-    try {
-      this.rewriteOptions = await fs.readFile(filePath, 'utf8');
-    } catch {
-      this.rewriteOptions = undefined;
-    }
-  }
-
   private setupWatchers() {
-    if (!this.workspaceFolder) {
+    if (!this.workspaceFolderUri) {
       return;
     }
-
-    const configDirUri = Uri.file(path.join(this.workspaceFolder, CONFIG_DIR));
 
     [SYSTEM_PROMPT_FILE, QUICK_FIXES_FILE, REWRITE_OPTIONS_FILE].forEach(
       (filename) => {
-        const fileUri = Uri.file(path.join(configDirUri.fsPath, filename));
-        const watcher = workspace.createFileSystemWatcher(fileUri.fsPath);
-        watcher.onDidChange(() => this.reloadConfig(filename));
-        watcher.onDidCreate(() => this.reloadConfig(filename));
-        watcher.onDidDelete(() => this.reloadConfig(filename));
-        this.watchers.push(watcher);
+        const fileUri = this.getConfigFileUri(filename);
+        if (fileUri) {
+          const watcher = workspace.createFileSystemWatcher(fileUri.fsPath);
+          watcher.onDidChange(() => this.reloadConfig(filename));
+          watcher.onDidCreate(() => this.reloadConfig(filename));
+          watcher.onDidDelete(() => this.reloadConfig(filename));
+          this.watchers.push(watcher);
+        }
       },
     );
   }
 
   private async reloadConfig(filename: string) {
-    let configType: FileConfigType | undefined;
-
-    switch (filename) {
-      case SYSTEM_PROMPT_FILE:
-        await this.loadSystemPrompt();
-        configType = ConfigurationKeys.systemPrompt;
-        break;
-      case QUICK_FIXES_FILE:
-        await this.loadQuickFixes();
-        configType = ConfigurationKeys.quickFixes;
-        break;
-      case REWRITE_OPTIONS_FILE:
-        await this.loadRewriteOptions();
-        configType = ConfigurationKeys.rewriteOptions;
-        break;
+    const configType = this.configMap[filename as keyof typeof this.configMap];
+    if (!configType) {
+      return;
     }
 
-    if (configType && this.listeners.has(configType)) {
-      this.listeners
-        .get(configType)!
-        .forEach((listener) => listener(configType));
-    }
+    await this.loadConfig(filename, configType);
+
+    this.listeners.get(configType)?.forEach((listener) => listener(configType));
   }
 
   getConfig(type: FileConfigType) {
@@ -160,108 +140,72 @@ export class FileConfigManager {
   }
 
   private async ensureConfigDir() {
-    if (!this.workspaceFolder) {
+    if (!this.workspaceFolderUri) {
       window.showErrorMessage('No workspace folder found.');
       return;
     }
 
-    const configDir = path.join(this.workspaceFolder, CONFIG_DIR);
-    try {
-      await fs.mkdir(configDir, { recursive: true });
-      return configDir;
-    } catch (err) {
-      window.showErrorMessage(
-        'Failed to create config directory: ' + String(err),
-      );
-      return;
-    }
+    const configDirUri = Uri.joinPath(this.workspaceFolderUri, CONFIG_DIR);
+    await workspace.fs.createDirectory(configDirUri);
+    return configDirUri;
   }
 
-  async maybeOverwrite(filePath: string): Promise<boolean> {
+  async maybeOverwrite(fileUri: Uri): Promise<boolean> {
     try {
-      await fs.access(filePath);
+      const fileStat = await workspace.fs.stat(fileUri);
       const answer = await window.showWarningMessage(
-        `File ${path.basename(filePath)} already exists. Overwrite?`,
+        `File ${fileUri.path} already exists. Overwrite?`,
         { modal: true },
         'Yes',
         'No',
       );
       return answer === 'Yes';
-    } catch {
+    } catch (error) {
+      if (error instanceof Error && error.name === 'FileSystemError') {
+        return true;
+      }
+
+      console.warn('Unexpected error checking file existence:', error);
       return true;
     }
   }
 
-  async createSystemPromptFile() {
-    const configDir = await this.ensureConfigDir();
-    if (!configDir) {
+  private async createConfigFile(
+    filename: string,
+    defaultContent: string | object,
+    isJson: boolean = false,
+  ) {
+    const configDirUri = await this.ensureConfigDir();
+    if (!configDirUri) {
       return;
     }
 
-    const filePath = path.join(configDir, SYSTEM_PROMPT_FILE);
-    if (!(await this.maybeOverwrite(filePath))) {
+    const fileUri = Uri.joinPath(configDirUri, filename);
+    if (!(await this.maybeOverwrite(fileUri))) {
       return;
     }
 
     try {
-      await fs.writeFile(filePath, DEFAULT_SYSTEM_PROMPT, { encoding: 'utf8' });
-      await window.showTextDocument(Uri.file(filePath));
+      const content = isJson
+        ? JSON.stringify(defaultContent, null, 2)
+        : String(defaultContent);
+
+      await workspace.fs.writeFile(fileUri, new TextEncoder().encode(content));
+      await window.showTextDocument(fileUri);
     } catch (err) {
-      window.showErrorMessage(
-        'Failed to create system prompt file: ' + String(err),
-      );
+      window.showErrorMessage(`Failed to create ${filename}: ${String(err)}`);
     }
+  }
+
+  async createSystemPromptFile() {
+    await this.createConfigFile(SYSTEM_PROMPT_FILE, DEFAULT_SYSTEM_PROMPT);
   }
 
   async createQuickFixesFile() {
-    const configDir = await this.ensureConfigDir();
-    if (!configDir) {
-      return;
-    }
-
-    const filePath = path.join(configDir, QUICK_FIXES_FILE);
-    if (!(await this.maybeOverwrite(filePath))) {
-      return;
-    }
-
-    try {
-      await fs.writeFile(
-        filePath,
-        JSON.stringify(DEFAULT_QUICK_FIXES, null, 2),
-        { encoding: 'utf8' },
-      );
-      window.showInformationMessage('Quick fixes file created at ' + filePath);
-    } catch (err) {
-      window.showErrorMessage(
-        'Failed to create quick fixes file: ' + String(err),
-      );
-    }
+    await this.createConfigFile(QUICK_FIXES_FILE, DEFAULT_QUICK_FIXES, true);
   }
 
   async createRewriteOptionsFile() {
-    const configDir = await this.ensureConfigDir();
-    if (!configDir) {
-      return;
-    }
-
-    const filePath = path.join(configDir, REWRITE_OPTIONS_FILE);
-    if (!(await this.maybeOverwrite(filePath))) {
-      return;
-    }
-
-    try {
-      await fs.writeFile(
-        filePath,
-        JSON.stringify(DEFAULT_REWRITE_OPTIONS, null, 2),
-        { encoding: 'utf8' },
-      );
-      window.showInformationMessage(
-        'Rewrite options file created at ' + filePath,
-      );
-    } catch (err) {
-      window.showErrorMessage(
-        'Failed to create rewrite options file: ' + String(err),
-      );
-    }
+    await this.createConfigFile(REWRITE_OPTIONS_FILE, DEFAULT_REWRITE_OPTIONS, true);
   }
 }

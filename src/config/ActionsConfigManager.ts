@@ -25,14 +25,22 @@ export class ActionsConfigManager {
     if (!Array.isArray(arr)) {
       return false;
     }
-    return arr.every(
-      (item) =>
-        typeof item === 'object' &&
-        item !== null &&
-        typeof (item as any).title === 'string' &&
-        typeof (item as any).description === 'string' &&
-        typeof (item as any).prompt === 'string',
-    );
+
+    return arr.every((item) => {
+      if (typeof item !== 'object' || item === null) {
+        return false;
+      }
+
+      const action = item as any;
+      return (
+        typeof action.title === 'string' &&
+        action.title.trim() !== '' &&
+        typeof action.description === 'string' &&
+        action.description.trim() !== '' &&
+        typeof action.prompt === 'string' &&
+        action.prompt.trim() !== ''
+      );
+    });
   }
 
   private getActionsType(
@@ -41,10 +49,10 @@ export class ActionsConfigManager {
     let actionsWithoutId:
       | LanguageConfig<Omit<WritingAction, 'id'>[]>
       | undefined;
-    const fileQuickFixesStr = this.config.getFileConfig(type as FileConfigType);
-    if (fileQuickFixesStr) {
+    const fileActionsStr = this.config.getFileConfig(type as FileConfigType);
+    if (fileActionsStr) {
       try {
-        const parsed = JSON.parse(fileQuickFixesStr);
+        const parsed = JSON.parse(fileActionsStr);
         if (this.isWritingActionArray(parsed)) {
           actionsWithoutId = { default: parsed };
         } else {
