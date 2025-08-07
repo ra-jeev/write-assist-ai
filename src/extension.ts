@@ -3,8 +3,9 @@ import { ExtensionManager } from './ExtensionManager';
 
 let extensionManager: ExtensionManager;
 
-export function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
   extensionManager = new ExtensionManager(context);
+  await extensionManager.initialize();
 }
 
 export function deactivate() {}

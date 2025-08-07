@@ -28,6 +28,10 @@ export class ExtensionManager {
     );
 
     this.aiServiceFactory = new AIServiceFactory(this.config);
+  }
+  
+  async initialize() {
+    await this.config.initialize();
     this.registerCommandsAndActions();
   }
 

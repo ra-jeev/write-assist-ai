@@ -30,7 +30,10 @@ export class ExtensionConfig {
     this.openAIConfig = new OpenAIConfigManager(this);
     this.actionsConfig = new ActionsConfigManager(this);
     this.fileConfigManager = new FileConfigManager();
-
+  }
+  
+  async initialize() {
+    await this.fileConfigManager.initialize();
     this.registerAllListeners();
     this.updateUseAcceptRejectFlow();
     this.initSeparator();

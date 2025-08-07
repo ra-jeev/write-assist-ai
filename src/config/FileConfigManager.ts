@@ -30,10 +30,9 @@ export class FileConfigManager {
 
   constructor() {
     this.workspaceFolderUri = workspace.workspaceFolders?.[0]?.uri;
-    this.initialize();
   }
 
-  private async initialize() {
+  async initialize() {
     await this.loadAllConfigs();
     this.setupWatchers();
   }
