@@ -1,8 +1,21 @@
-import { commands, ExtensionContext, languages, Range, TextDocument } from 'vscode';
+import {
+  commands,
+  ExtensionContext,
+  languages,
+  Range,
+  TextDocument,
+} from 'vscode';
 import { ExtensionConfig } from './config/ExtensionConfig';
 import { AIServiceFactory } from './services/AIServiceFactory';
 import { WriteAssistAI } from './WriteAssistAI';
-import { ACCEPT_REPHRASE_CMD, OPEN_AI_API_KEY_CMD, REJECT_REPHRASE_CMD } from './constants';
+import {
+  ACCEPT_REPHRASE_CMD,
+  OPEN_AI_API_KEY_CMD,
+  REJECT_REPHRASE_CMD,
+  CREATE_SYSTEM_PROMPT_FILE_CMD,
+  CREATE_QUICK_FIXES_FILE_CMD,
+  CREATE_REWRITE_OPTIONS_FILE_CMD,
+} from './constants';
 
 export class ExtensionManager {
   private config: ExtensionConfig;
@@ -11,7 +24,7 @@ export class ExtensionManager {
   constructor(private context: ExtensionContext) {
     this.config = new ExtensionConfig(
       context,
-      this.handleCommandsConfigChange.bind(this)
+      this.handleCommandsConfigChange.bind(this),
     );
 
     this.aiServiceFactory = new AIServiceFactory(this.config);
@@ -28,14 +41,18 @@ export class ExtensionManager {
     this.registerCommandsAndActions();
   }
 
-  private registerCodeActionsProviderAndCmds(actionsProvider: WriteAssistAI, supportedLanguages: string[], supportedCommands: string[]) {
+  private registerCodeActionsProviderAndCmds(
+    actionsProvider: WriteAssistAI,
+    supportedLanguages: string[],
+    supportedCommands: string[],
+  ) {
     // Register the code action provider for supported languages
     const provider = languages.registerCodeActionsProvider(
       supportedLanguages,
       actionsProvider,
       {
         providedCodeActionKinds: WriteAssistAI.providedCodeActionKinds,
-      }
+      },
     );
 
     this.context.subscriptions.push(provider);
@@ -43,51 +60,76 @@ export class ExtensionManager {
     // Register all the commands for the code actions
     for (const command of supportedCommands) {
       this.context.subscriptions.push(
-        commands.registerCommand(command, (...args: [string, TextDocument, Range]) => {
-          actionsProvider.handleAction(...args);
-        })
+        commands.registerCommand(
+          command,
+          (...args: [string, TextDocument, Range]) => {
+            actionsProvider.handleAction(...args);
+          },
+        ),
       );
     }
   }
 
-  private registerCodeLensProviderAndCmds(codelensProvider: WriteAssistAI, supportedLanguages: string[], supportedCommands: string[]) {
+  private registerCodeLensProviderAndCmds(
+    codelensProvider: WriteAssistAI,
+    supportedLanguages: string[],
+  ) {
     // Register the code lens provider for supported languages
     const provider = languages.registerCodeLensProvider(
       supportedLanguages,
-      codelensProvider
+      codelensProvider,
     );
 
     this.context.subscriptions.push(provider);
 
     // Register the commands for accept/reject buttons
     this.context.subscriptions.push(
-      commands.registerCommand(ACCEPT_REPHRASE_CMD,
-        () => {
-          codelensProvider.acceptRephrase();
-        }
-      )
+      commands.registerCommand(ACCEPT_REPHRASE_CMD, () => {
+        codelensProvider.acceptRephrase();
+      }),
     );
 
     this.context.subscriptions.push(
-      commands.registerCommand(REJECT_REPHRASE_CMD,
-        () => {
-          codelensProvider.rejectRephrase();
-        }
-      )
+      commands.registerCommand(REJECT_REPHRASE_CMD, () => {
+        codelensProvider.rejectRephrase();
+      }),
+    );
+  }
+
+  private registerConfigFilesCreationCmds() {
+    this.context.subscriptions.push(
+      commands.registerCommand(
+        CREATE_SYSTEM_PROMPT_FILE_CMD,
+        () => this.config.createSystemPromptFile,
+      ),
+    );
+
+    this.context.subscriptions.push(
+      commands.registerCommand(
+        CREATE_QUICK_FIXES_FILE_CMD,
+        () => this.config.createQuickFixesFile,
+      ),
+    );
+
+    this.context.subscriptions.push(
+      commands.registerCommand(
+        CREATE_REWRITE_OPTIONS_FILE_CMD,
+        () => this.config.createRewriteOptionsFile,
+      ),
     );
   }
 
   private registerCommandsAndActions() {
     const writeAssist: WriteAssistAI = new WriteAssistAI(
       this.config,
-      this.aiServiceFactory
+      this.aiServiceFactory,
     );
 
     const supportedLanguages = [
       'markdown',
-      "markdown_latex_combined",
-      "markdown-math",
-      "mdx",
+      'markdown_latex_combined',
+      'markdown-math',
+      'mdx',
       'plaintext',
       'tex',
       'latex',
@@ -95,15 +137,22 @@ export class ExtensionManager {
       'quarto',
     ];
 
-    this.registerCodeActionsProviderAndCmds(writeAssist, supportedLanguages, writeAssist.commands);
+    this.registerCodeActionsProviderAndCmds(
+      writeAssist,
+      supportedLanguages,
+      writeAssist.commands,
+    );
 
-    this.registerCodeLensProviderAndCmds(writeAssist, supportedLanguages, writeAssist.commands);
+    this.registerCodeLensProviderAndCmds(writeAssist, supportedLanguages);
 
     // Add the command for OpenAI API Key configuration
     this.context.subscriptions.push(
       commands.registerCommand(OPEN_AI_API_KEY_CMD, () =>
-        this.config.promptUserForApiKey()
-      )
+        this.config.promptUserForApiKey(),
+      ),
     );
+
+    // Register commands for generating config files
+    this.registerConfigFilesCreationCmds();
   }
 }

@@ -55,6 +55,21 @@
         "title": "Set the OpenAI Api Key",
         "shortTitle": "OpenAI Api Key",
         "category": "Write Assist AI"
+      },
+      {
+        "command": "writeAssistAi.createSystemPromptFile",
+        "title": "Generate System Prompt File",
+        "category": "Write Assist AI"
+      },
+      {
+        "command": "writeAssistAi.createQuickFixesFile",
+        "title": "Generate Quick Fixes File",
+        "category": "Write Assist AI"
+      },
+      {
+        "command": "writeAssistAi.createRewriteOptionsFile",
+        "title": "Generate Rewrite Options File",
+        "category": "Write Assist AI"
       }
     ],
     "configuration": {
