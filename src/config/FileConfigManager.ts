@@ -1,4 +1,4 @@
-import { workspace, Uri, FileSystemWatcher } from 'vscode';
+import { workspace, Uri, FileSystemWatcher, window } from 'vscode';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -7,6 +7,10 @@ import {
   QUICK_FIXES_FILE,
   REWRITE_OPTIONS_FILE,
   SYSTEM_PROMPT_FILE,
+  DEFAULT_QUICK_FIXES,
+  DEFAULT_REWRITE_OPTIONS,
+  DEFAULT_SYSTEM_PROMPT,
+  ConfigurationKeys,
 } from '../constants';
 import type { FileConfigType, FileConfigChangeListener } from '../types';
 
@@ -106,7 +110,7 @@ export class FileConfigManager {
 
   private async reloadConfig(filename: string) {
     let configType: FileConfigType | undefined;
-    
+
     switch (filename) {
       case SYSTEM_PROMPT_FILE:
         await this.loadSystemPrompt();
@@ -153,5 +157,111 @@ export class FileConfigManager {
     }
 
     this.listeners.get(type)!.push(listener);
+  }
+
+  private async ensureConfigDir() {
+    if (!this.workspaceFolder) {
+      window.showErrorMessage('No workspace folder found.');
+      return;
+    }
+
+    const configDir = path.join(this.workspaceFolder, CONFIG_DIR);
+    try {
+      await fs.mkdir(configDir, { recursive: true });
+      return configDir;
+    } catch (err) {
+      window.showErrorMessage(
+        'Failed to create config directory: ' + String(err),
+      );
+      return;
+    }
+  }
+
+  async maybeOverwrite(filePath: string): Promise<boolean> {
+    try {
+      await fs.access(filePath);
+      const answer = await window.showWarningMessage(
+        `File ${path.basename(filePath)} already exists. Overwrite?`,
+        { modal: true },
+        'Yes',
+        'No',
+      );
+      return answer === 'Yes';
+    } catch {
+      return true;
+    }
+  }
+
+  async createSystemPromptFile() {
+    const configDir = await this.ensureConfigDir();
+    if (!configDir) {
+      return;
+    }
+
+    const filePath = path.join(configDir, SYSTEM_PROMPT_FILE);
+    if (!(await this.maybeOverwrite(filePath))) {
+      return;
+    }
+
+    try {
+      await fs.writeFile(filePath, DEFAULT_SYSTEM_PROMPT, { encoding: 'utf8' });
+      await window.showTextDocument(Uri.file(filePath));
+    } catch (err) {
+      window.showErrorMessage(
+        'Failed to create system prompt file: ' + String(err),
+      );
+    }
+  }
+
+  async createQuickFixesFile() {
+    const configDir = await this.ensureConfigDir();
+    if (!configDir) {
+      return;
+    }
+
+    const filePath = path.join(configDir, QUICK_FIXES_FILE);
+    if (!(await this.maybeOverwrite(filePath))) {
+      return;
+    }
+
+    try {
+      await fs.writeFile(
+        filePath,
+        JSON.stringify(DEFAULT_QUICK_FIXES, null, 2),
+        { encoding: 'utf8' },
+      );
+      window.showInformationMessage('Quick fixes file created at ' + filePath);
+    } catch (err) {
+      window.showErrorMessage(
+        'Failed to create quick fixes file: ' + String(err),
+      );
+    }
+  }
+
+  async createRewriteOptionsFile() {
+    const configDir = await this.ensureConfigDir();
+    if (!configDir) {
+      return;
+    }
+
+    const filePath = path.join(configDir, REWRITE_OPTIONS_FILE);
+    if (!(await this.maybeOverwrite(filePath))) {
+      return;
+    }
+
+    try {
+      await fs.writeFile(
+        filePath,
+        JSON.stringify(DEFAULT_REWRITE_OPTIONS, null, 2),
+        { encoding: 'utf8' },
+      );
+      window.showInformationMessage(
+        'Rewrite options file created at ' + filePath,
+      );
+    } catch (err) {
+      window.showErrorMessage(
+        'Failed to create rewrite options file: ' + String(err),
+      );
+    }
   }
 }

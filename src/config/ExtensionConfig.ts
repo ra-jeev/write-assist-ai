@@ -178,4 +178,16 @@ export class ExtensionConfig {
       this.updateUseAcceptRejectFlow();
     }
   }
+
+  createSystemPromptFile() {
+    this.fileConfigManager.createSystemPromptFile();
+  }
+
+  createQuickFixesFile() {
+    this.fileConfigManager.createQuickFixesFile();
+  }
+
+  createRewriteOptionsFile() {
+    this.fileConfigManager.createRewriteOptionsFile();
+  }
 }
