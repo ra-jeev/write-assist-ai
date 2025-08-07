@@ -86,7 +86,7 @@ export class OpenAIConfigManager {
   }
 
   getSystemPrompt(): LanguageConfig<string> {
-    const fileSystemPrompt = this.config.getFileConfig('systemPrompt');
+    const fileSystemPrompt = this.config.getFileConfig(ConfigurationKeys.systemPrompt);
     if (fileSystemPrompt) {
       return { default: fileSystemPrompt };
     }

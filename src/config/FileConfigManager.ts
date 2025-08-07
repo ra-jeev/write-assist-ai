@@ -131,11 +131,11 @@ export class FileConfigManager {
 
   getConfig(type: FileConfigType) {
     switch (type) {
-      case 'systemPrompt':
+      case ConfigurationKeys.systemPrompt:
         return this.systemPrompt;
-      case 'quickFixes':
+      case ConfigurationKeys.quickFixes:
         return this.quickFixes;
-      case 'rewriteOptions':
+      case ConfigurationKeys.rewriteOptions:
         return this.rewriteOptions;
     }
   }
