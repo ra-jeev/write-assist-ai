@@ -1,4 +1,4 @@
-import { workspace, Uri, FileSystemWatcher, window } from 'vscode';
+import {  FileSystemWatcher, RelativePattern, Uri, window, workspace } from 'vscode';
 
 import {
   CONFIG_DIR,
@@ -86,6 +86,19 @@ export class FileConfigManager {
     if (!this.workspaceFolderUri) {
       return;
     }
+    
+    const dirWatcher = workspace.createFileSystemWatcher(
+      new RelativePattern(this.workspaceFolderUri, CONFIG_DIR)
+    );
+
+    dirWatcher.onDidDelete(() => {
+      this.systemPrompt = undefined;
+      this.quickFixes = undefined;
+      this.rewriteOptions = undefined;
+      this.notifyAllListeners();
+    });
+  
+    this.watchers.push(dirWatcher);
 
     [SYSTEM_PROMPT_FILE, QUICK_FIXES_FILE, REWRITE_OPTIONS_FILE].forEach(
       (filename) => {
@@ -110,6 +123,18 @@ export class FileConfigManager {
     await this.loadConfig(filename, configType);
 
     this.listeners.get(configType)?.forEach((listener) => listener(configType));
+  }
+
+  private notifyAllListeners() {
+    const configTypes: FileConfigType[] = [
+      ConfigurationKeys.systemPrompt,
+      ConfigurationKeys.quickFixes,
+      ConfigurationKeys.rewriteOptions
+    ];
+
+    configTypes.forEach((configType) => {
+      this.listeners.get(configType)?.forEach(listener => listener(configType));
+    });
   }
 
   getConfig(type: FileConfigType) {
@@ -151,7 +176,7 @@ export class FileConfigManager {
 
   async maybeOverwrite(fileUri: Uri): Promise<boolean> {
     try {
-      const fileStat = await workspace.fs.stat(fileUri);
+      await workspace.fs.stat(fileUri);
       const answer = await window.showWarningMessage(
         `File ${fileUri.path} already exists. Overwrite?`,
         { modal: true },
@@ -159,12 +184,7 @@ export class FileConfigManager {
         'No',
       );
       return answer === 'Yes';
-    } catch (error) {
-      if (error instanceof Error && error.name === 'FileSystemError') {
-        return true;
-      }
-
-      console.warn('Unexpected error checking file existence:', error);
+    } catch {
       return true;
     }
   }
