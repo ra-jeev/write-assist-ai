@@ -21,6 +21,7 @@ export type OpenAIConfig = {
   model: string;
   maxTokens: number;
   temperature: number;
+  isCustomModel: boolean;
 };
 
 export type CommandsChangeListener = () => void;

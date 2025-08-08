@@ -63,21 +63,20 @@ export class OpenAIConfigManager {
       DEFAULT_MODEL,
     );
 
+    let isCustomModel = false;
     if (model.default === 'custom') {
+      isCustomModel = true;
       model = this.config.getConfiguration<string>(
         ConfigurationKeys.customModel,
-        DEFAULT_MODEL,
+        '',
       );
-
-      if (!model.default) {
-        model.default = DEFAULT_MODEL;
-      }
     }
 
     return {
       maxTokens: maxTokens.default,
       model: model.default,
       temperature: temperature.default,
+      isCustomModel,
     };
   }
 
