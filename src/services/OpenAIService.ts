@@ -12,6 +12,7 @@ export class OpenAIService {
   private readonly openAiSvc: OpenAI;
   private _config: OpenAIConfig;
   private _systemPrompt: LanguageConfig<string>;
+  private _proxyUrl: string | undefined;
 
   constructor(
     apiKey: string,
@@ -26,6 +27,7 @@ export class OpenAIService {
 
     this._config = config;
     this._systemPrompt = systemPrompt;
+    this._proxyUrl = proxyUrl;
   }
 
   set config(config: OpenAIConfig) {
@@ -48,12 +50,27 @@ export class OpenAIService {
     return /^(gpt-5|o3|o4)/.test(model);
   }
 
+  private validateModelSelection() {
+    if (this._proxyUrl && (!this._config.isCustomModel || !this._config.model)) {
+      return 'When using a proxy URL, you must set a custom model in the settings.';
+    } else if (!this._config.model) {
+      return 'No model set. Please set a custom model when choosing "Custom" from the dropdown.';
+    }
+
+    return null;
+  }
+
   async createChatCompletion(
     cmdPrompt: string,
     text: string,
     languageId: string,
   ): Promise<string> {
     try {
+      const errorMsg = this.validateModelSelection();
+      if (errorMsg) {
+        throw new Error(errorMsg);
+      }
+
       const messages: OpenAI.ChatCompletionMessageParam[] = [];
 
       const systemPrompt = this.getSystemPrompt(languageId);
