@@ -36,12 +36,16 @@ export class OpenAIService {
     this._systemPrompt = systemPrompt;
   }
 
-  getSystemPrompt(languageId: string) {
+  private getSystemPrompt(languageId: string) {
     if (languageId in this._systemPrompt) {
       return this._systemPrompt[languageId];
     }
 
     return this._systemPrompt.default;
+  }
+
+  private isNewModel(model: string) {
+    return /^(gpt-5|o3|o4)/.test(model);
   }
 
   async createChatCompletion(
@@ -65,12 +69,17 @@ export class OpenAIService {
       }${text}`;
       messages.push({ role: 'user', content: userPrompt });
 
-      const response = await this.openAiSvc.chat.completions.create({
+      const options = {
         model: this._config.model,
-        messages,
-        temperature: this._config.temperature,
-        max_tokens: this._config.maxTokens,
+        ...(this.isNewModel(this._config.model)
+          ? { max_completion_tokens: this._config.maxTokens }
+          : { max_tokens: this._config.maxTokens, temperature: this._config.temperature, }),
         n: 1,
+      };
+
+      const response = await this.openAiSvc.chat.completions.create({
+        messages,
+        ...options
       });
 
       if (response.choices.length) {
