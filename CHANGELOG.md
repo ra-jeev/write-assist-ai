@@ -6,6 +6,28 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 
 --
 
+## [v0.7.0] - 2025-08-08
+
+### Added
+
+* Support for file-based configuration (#29):  
+  - `.write-assist-ai/systemPrompt.md` – system prompt text
+  - `.write-assist-ai/quickFixes.json` – quick fix actions
+  - `.write-assist-ai/rewriteOptions.json` – rewrite actions
+  - Commands to generate these files with default values
+* File-based configuration **now takes precedence** over VS Code settings
+
+### Fixed
+
+* Compatibility issue where newer models do not support `max_tokens` / `temperature` settings (#30)
+
+### Updated
+
+* Improved error handling for the custom model setting (#27)
+* Updated OpenAI model list and set default to `gpt-5`
+* Default `max_tokens` increased to 4096
+* **README** updated with usage instructions for file-based configuration
+
 ## [v0.6.2] - 2025-07-31
 
 ### Added

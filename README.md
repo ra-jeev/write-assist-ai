@@ -100,9 +100,9 @@ You are a helpful assistant. Your job is to perform the tasks related to rewriti
 
 If no file-based config is present, or for settings that aren't supported with file-based config, the extension uses VS Code settings as described below:
 
-* `writeAssistAi.maxTokens`: Maximum number of tokens to use for each OpenAI API call. The default is `1200`.
+* `writeAssistAi.maxTokens`: Maximum number of tokens to use for each OpenAI API call. The default is `4096`.
 * `writeAssistAi.temperature`: Temperature value to use for the API calls. The default is `0.3`.
-* `writeAssistAi.openAi.model`: The OpenAI model to use. The default is `gpt-4o`.
+* `writeAssistAi.openAi.model`: The OpenAI model to use. The default is `gpt-5`.
 * `writeAssistAi.openAi.customModel`: To use a custom model, select `custom` from the `writeAssistAi.openAi.model` dropdown menu, and enter your model name here.
 * `writeAssistAi.openAi.proxyUrl`: To use a proxy for AI calls or to connect with an OpenAI-compatible AI provider (such as `Ollama`, `Groq` etc.), set this to your preferred value. If you choose a different provider, you will also need to update the API Key and specify the custom model you wish to use.
 * `writeAssistAi.systemPrompt`: Sets a common system prompt to be used with LLM API calls. You can also configure language-specific system prompts using VS Code settings (e.g., @lang:markdown Write Assist AI). **Note:** File-based config (systemPrompt.md) does not support language-specific overrides.
@@ -179,6 +179,28 @@ To specify actions for a specific language, place the actions within the corresp
 --
 
 ## 🚀 Release Notes
+
+### v0.7.0
+
+#### Added
+
+* Support for file-based configuration (#29):  
+  - `.write-assist-ai/systemPrompt.md` – system prompt text
+  - `.write-assist-ai/quickFixes.json` – quick fix actions
+  - `.write-assist-ai/rewriteOptions.json` – rewrite actions
+  - Commands to generate these files with default values
+* File-based configuration **now takes precedence** over VS Code settings
+
+#### Fixed
+
+* Compatibility issue where newer models do not support `max_tokens` / `temperature` settings (#30)
+
+#### Updated
+
+* Improved error handling for the custom model setting (#27)
+* Updated OpenAI model list and set default to `gpt-5`
+* Default `max_tokens` increased to 4096
+* **README** updated with usage instructions for file-based configuration
 
 ### v0.6.2
 

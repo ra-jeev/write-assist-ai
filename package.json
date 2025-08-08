@@ -2,7 +2,7 @@
   "name": "write-assist-ai",
   "displayName": "Write Assist AI",
   "description": "Fully customizable AI-powered Text Rewriter/Paraphraser for VS Code. Boost your writing productivity and creativity with AI-powered rewrites! This extension seamlessly integrates with VS Code, allowing you to rewrite text in Markdown, LaTeX, and plain text files using the latest OpenAI models.",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "publisher": "ra-jeev",
   "repository": {
     "url": "https://github.com/ra-jeev/write-assist-ai"
@@ -79,7 +79,7 @@
           "type": "integer",
           "default": 4096,
           "order": 0,
-          "description": "Set the maximum number of tokens to use for each API call"
+          "description": "Sets the maximum number of tokens for each API call."
         },
         "writeAssistAi.temperature": {
           "type": "number",
@@ -87,7 +87,7 @@
           "minimum": 0,
           "maximum": 2,
           "order": 1,
-          "description": "Set the temperature parameter (0-2) for the API calls"
+          "description": "Controls the temperature (0–2) for API calls. Lower values make output more focused and deterministic; higher values make it more random and creative. This setting is ignored by newer models such as o3, o4, and GPT-5."
         },
         "writeAssistAi.openAi.model": {
           "type": "string",
@@ -107,17 +107,17 @@
           ],
           "default": "gpt-5",
           "order": 2,
-          "description": "Choose the default OpenAI model"
+          "description": "Select the default OpenAI model to use for rewrites."
         },
         "writeAssistAi.openAi.customModel": {
           "type": "string",
           "order": 3,
-          "markdownDescription": "The custom OpenAI model to use (used only when '#writeAssistAi.openAi.model#' is set to `custom`).\n\nIf no value is provided then the default configured model will be used instead."
+          "markdownDescription": "The custom OpenAI model to use when `#writeAssistAi.openAi.model#` is set to `custom`.\n\nWhen using a `#writeAssistAi.openAi.proxyUrl#` you must set a custom model."
         },
         "writeAssistAi.openAi.proxyUrl": {
           "type": "string",
           "order": 4,
-          "markdownDescription": "Proxy server URL (if any). No validation is done on the URL.\n\nUse a fully qualified URL along with the port e.g. `http://localhost:8080`"
+          "markdownDescription": "The proxy server URL to use for API calls.\n\nEnter a fully qualified URL including the port, for example: `http://localhost:11434/v1` for Ollama. You must also set the custom model to use when setting this."
         },
         "writeAssistAi.systemPrompt": {
           "type": "string",
@@ -125,19 +125,19 @@
           "order": 5,
           "scope": "language-overridable",
           "editPresentation": "multilineText",
-          "markdownDescription": "Set the system prompt to use for the API calls. The prompt specific to a performed action will be in addition to this system prompt.\n\n**Language Specific Config:** You can also different system prompts for different languages. To do that open your VS Code settings UI and type `@lang:<languageId> Write Assist AI` e.g. `@lang:markdown Write Assist AI` and set the System Prompt for the selected language."
+          "markdownDescription": "Sets the base system prompt for API calls. Any action-specific prompt will be added to this system prompt.\n\n**Language-specific config:** You can set different system prompts for different languages. In the VS Code settings UI, type `@lang:<languageId> Write Assist AI` (e.g. `@lang:markdown Write Assist AI`) and set the System Prompt for that language.\n\n**Note:** You can also set this per project using a `systemPrompt.md` file inside a `.write-assist-ai/` folder at your workspace root. File-based config overrides this setting, but does not support language-specific overrides (see README for details)."
         },
         "writeAssistAi.useAcceptRejectFlow": {
           "type": "boolean",
           "default": true,
           "order": 6,
-          "markdownDescription": "When enabled, the original and rewritten text will be shown one below the other, with option to accept or reject the rewritten version.\n\nIf disabled, the rewritten text is automatically inserted into the editor enclosed within the configured '#writeAssistAi.separatorText#'."
+          "markdownDescription": "If enabled, the original and rewritten text are shown together with options to accept or reject the rewrite.\n\nIf disabled, the rewritten text is inserted automatically into the editor, enclosed within the configured `#writeAssistAi.separatorText#`."
         },
         "writeAssistAi.separatorText": {
           "type": "string",
           "default": "********************************",
           "order": 7,
-          "markdownDescription": "The separator text that should appear around the rewritten text. Leave it empty for no separator."
+          "markdownDescription": "The text used to separate the rewritten output in the editor. Leave empty for no separator."
         },
         "writeAssistAi.quickFixes": {
           "type": "array",
@@ -154,17 +154,17 @@
               "title": {
                 "type": "string",
                 "default": "",
-                "description": "The command title. Shows up in the editor tooltip menu"
+                "description": "The command title shown in the editor tooltip menu."
               },
               "description": {
                 "type": "string",
                 "default": "",
-                "description": "The description of the command"
+                "description": "A short description of the command."
               },
               "prompt": {
                 "type": "string",
                 "default": "",
-                "description": "The prompt to use for this command when interacting with an LLM"
+                "description": "The LLM prompt to use for this command."
               }
             },
             "additionalProperties": false,
@@ -177,32 +177,32 @@
           "default": [
             {
               "title": "Rephrase the selected text",
-              "description": "Rephrases the selected text",
+              "description": "Rephrases the selected text.",
               "prompt": "Rephrase the given text and make the sentences more clear and readable."
             },
             {
               "title": "Suggest headlines for selection",
-              "description": "Suggests some appropriate headlines for the selected text",
-              "prompt": "Suggest 2-3 short headlines based on the given text."
+              "description": "Suggests appropriate headlines for the selected text.",
+              "prompt": "Suggest 2–3 short headlines based on the given text."
             },
             {
               "title": "Summarize the selected text",
-              "description": "Writes a summary for the selected text",
+              "description": "Writes a summary of the selected text.",
               "prompt": "Write a short summary for the given text."
             },
             {
               "title": "Expand the selected text",
-              "description": "Builds upon the selected text and makes it verbose",
+              "description": "Expands on the selected text, making it more detailed.",
               "prompt": "Continue building on the given text, make it better and verbose."
             },
             {
               "title": "Shorten the selected text",
-              "description": "Based on the selected text tries to make it concise",
+              "description": "Makes the selected text more concise.",
               "prompt": "Try to make the given text concise while keeping its essence."
             }
           ],
           "scope": "language-overridable",
-          "markdownDescription": "The commands that will show up in the quick fix section of the editor tooltip when you select some text.\n\n**Language Specific Config:** To configure actions per language, just put the new actions under the particular language config block, e.g. for markdown, put `\"writeAssistAi.quickFixes\"` under `\"[markdown]\"` block.\n\n**Example Action Config:**\n```json\n[\n  {\n    \"title\": \"<command name/short title>\",\n    \"description\": \"<command description>\",\n    \"prompt\": \"<LLM prompt for the given command>\"\n  }\n]\n```"
+          "markdownDescription": "Commands that appear in the **Quick Fix** section of the editor tooltip when text is selected.\n\n**Language-specific config:** To configure actions per language, place them under that language’s config block (e.g. for markdown, put `\"writeAssistAi.quickFixes\"` under the `[markdown]` block).\n\n**Example config:**\n```json\n[\n  {\n    \"title\": \"<command name/short title>\",\n    \"description\": \"<command description>\",\n    \"prompt\": \"<LLM prompt for the given command>\"\n  }\n]\n```\n\n**Note:** You can also set this per project using a `quickFixes.json` file inside a `.write-assist-ai/` folder at your workspace root. File-based config overrides this setting, but does not support language-specific overrides (see README for details)."
         },
         "writeAssistAi.rewriteOptions": {
           "type": "array",
@@ -219,17 +219,17 @@
               "title": {
                 "type": "string",
                 "default": "",
-                "description": "The command title. Shows up in the editor tooltip menu"
+                "description": "The command title shown in the editor tooltip menu."
               },
               "description": {
                 "type": "string",
                 "default": "",
-                "description": "The description of the command"
+                "description": "A short description of the command."
               },
               "prompt": {
                 "type": "string",
                 "default": "",
-                "description": "The prompt to use for this command when interacting with an LLM"
+                "description": "The LLM prompt to use for this command."
               }
             },
             "additionalProperties": false,
@@ -242,37 +242,37 @@
           "default": [
             {
               "title": "Change to professional tone",
-              "description": "Changes the selected text's tone to professional",
+              "description": "Rewrites the selected text in a professional tone.",
               "prompt": "Make the given text better and rewrite it in a professional tone."
             },
             {
               "title": "Change to casual tone",
-              "description": "Changes the selected text's tone to casual",
+              "description": "Rewrites the selected text in a casual tone.",
               "prompt": "Make the given text better and rewrite it in a casual tone."
             },
             {
               "title": "Change to formal tone",
-              "description": "Changes the selected text's tone to formal",
+              "description": "Rewrites the selected text in a formal tone.",
               "prompt": "Make the given text better and rewrite it in a formal tone."
             },
             {
               "title": "Change to friendly tone",
-              "description": "Changes the selected text's tone to friendly",
+              "description": "Rewrites the selected text in a friendly tone.",
               "prompt": "Make the given text better and rewrite it in a friendly tone."
             },
             {
               "title": "Change to informative tone",
-              "description": "Changes the selected text's tone to informative",
+              "description": "Rewrites the selected text in an informative tone.",
               "prompt": "Make the given text better and rewrite it in an informative tone."
             },
             {
               "title": "Change to authoritative tone",
-              "description": "Changes the selected text's tone to authoritative",
+              "description": "Rewrites the selected text in an authoritative tone.",
               "prompt": "Make the given text better and rewrite it in an authoritative tone."
             }
           ],
           "scope": "language-overridable",
-          "markdownDescription": "The commands that will show up in the rewrite section of the editor tooltip when you select some text.\n\n**Language Specific Config:** To configure actions per language, just put the new actions under the particular language config block, e.g. for markdown, put `\"writeAssistAi.rewriteOptions\"` under `\"[markdown]\"` block.\n\n**Example Action Config:**\n```json\n[\n  {\n    \"title\": \"<command name/short title>\",\n    \"description\": \"<command description>\",\n    \"prompt\": \"<LLM prompt for the given command>\"\n  }\n]\n```"
+          "markdownDescription": "Commands that appear in the **Rewrite** section of the editor tooltip when text is selected.\n\n**Language-specific config:** To configure actions per language, place them under that language’s config block (e.g. for markdown, put `\"writeAssistAi.rewriteOptions\"` under the `[markdown]` block).\n\n**Example config:**\n```json\n[\n  {\n    \"title\": \"<command name/short title>\",\n    \"description\": \"<command description>\",\n    \"prompt\": \"<LLM prompt for the given command>\"\n  }\n]\n```\n\n**Note:** You can also set this per project using a `rewriteOptions.json` file inside a `.write-assist-ai/` folder at your workspace root. File-based config overrides this setting, but does not support language-specific overrides (see README for details)."
         }
       }
     }
