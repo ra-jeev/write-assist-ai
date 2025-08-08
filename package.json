@@ -77,7 +77,7 @@
       "properties": {
         "writeAssistAi.maxTokens": {
           "type": "integer",
-          "default": 1200,
+          "default": 4096,
           "order": 0,
           "description": "Set the maximum number of tokens to use for each API call"
         },
@@ -92,22 +92,20 @@
         "writeAssistAi.openAi.model": {
           "type": "string",
           "enum": [
-            "o1",
-            "o3",
-            "o1-mini",
-            "o3-mini",
-            "o4-mini",
+            "gpt-5",
+            "gpt-5-mini",
+            "gpt-5-nano",
             "gpt-4.1",
             "gpt-4.1-mini",
             "gpt-4.1-nano",
             "gpt-4o",
             "gpt-4o-mini",
-            "gpt-4-turbo",
-            "gpt-4",
-            "gpt-3.5-turbo",
+            "o3",
+            "o3-mini",
+            "o4-mini",
             "custom"
           ],
-          "default": "gpt-4o",
+          "default": "gpt-5",
           "order": 2,
           "description": "Choose the default OpenAI model"
         },
