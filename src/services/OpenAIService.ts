@@ -103,6 +103,10 @@ export class OpenAIService {
         n: 1,
       };
 
+      if (this._config.reasoningEffort && this._config.reasoningEffort !== 'auto') {
+        options.reasoning_effort = this._config.reasoningEffort;
+      }
+
       if (callOptions.ignoreMaxTokens) {
         delete options.max_tokens;
         delete options.max_completion_tokens;

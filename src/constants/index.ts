@@ -11,6 +11,7 @@ export enum ConfigurationKeys {
   model = 'openAi.model',
   customModel = 'openAi.customModel',
   proxyUrl = 'openAi.proxyUrl',
+  reasoningEffort = 'openAi.reasoningEffort',
   quickFixes = 'quickFixes',
   rewriteOptions = 'rewriteOptions',
   systemPrompt = 'systemPrompt',

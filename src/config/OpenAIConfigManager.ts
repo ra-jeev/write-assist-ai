@@ -11,6 +11,7 @@ import type {
   LanguageConfig,
   OpenAIConfig,
   OpenAIConfigChangeListener,
+  ReasoningEffort,
 } from '../types';
 
 export class OpenAIConfigManager {
@@ -72,11 +73,17 @@ export class OpenAIConfigManager {
       );
     }
 
+    const reasoningEffort = this.config.getConfiguration<ReasoningEffort>(
+      ConfigurationKeys.reasoningEffort,
+      'auto'
+    );
+
     return {
       maxTokens: maxTokens.default,
       model: model.default,
       temperature: temperature.default,
       isCustomModel,
+      reasoningEffort: reasoningEffort.default,
     };
   }
 
@@ -104,7 +111,8 @@ export class OpenAIConfigManager {
       isConfigChanged(event, ConfigurationKeys.maxTokens) ||
       isConfigChanged(event, ConfigurationKeys.temperature) ||
       isConfigChanged(event, ConfigurationKeys.systemPrompt) ||
-      isConfigChanged(event, ConfigurationKeys.proxyUrl)
+      isConfigChanged(event, ConfigurationKeys.proxyUrl) ||
+      isConfigChanged(event, ConfigurationKeys.reasoningEffort)
     );
   }
 
