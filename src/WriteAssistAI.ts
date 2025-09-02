@@ -1,4 +1,5 @@
 import {
+  CancellationToken,
   CodeAction,
   CodeActionKind,
   CodeActionProvider,
@@ -7,6 +8,7 @@ import {
   DecorationRenderOptions,
   EventEmitter,
   Position,
+  Progress,
   ProgressLocation,
   Range,
   Selection,
@@ -20,6 +22,7 @@ import {
 } from 'vscode';
 
 import { AIServiceFactory } from './services/AIServiceFactory';
+import { TokenLimitError } from './services/OpenAIService';
 import { ExtensionConfig } from './config/ExtensionConfig';
 import {
   ACCEPT_REPHRASE_CMD,
@@ -126,12 +129,6 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     document: TextDocument,
     range: Range,
   ): CodeAction[] | undefined {
-    // If nothing is selected, or if the previous action is
-    // already under progress, then don't provide any action
-    if (range.isEmpty || this.currentlyProcessing) {
-      return;
-    }
-
     const actions = this.actions[document.languageId] ?? this.actions.default;
 
     actions.forEach((action) => {
@@ -238,111 +235,201 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     }
   }
 
+  private async getAIService() {
+    try {
+      return await this.aiServiceFactory.getService();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : InfoMessages.AI_SERVICE_ERROR;
+      throw new Error(errorMessage);
+    }
+  }
+
+  private async handleServiceError(error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : InfoMessages.AI_SERVICE_ERROR;
+    await window.showErrorMessage(errorMessage);
+  }
+
   async handleAction(prompt: string, document: TextDocument, range: Range) {
     this.currentlyProcessing = true;
-    let openAIService;
+  
     try {
-      openAIService = await this.aiServiceFactory.getService();
+      const openAIService = await this.getAIService();
+    
+      await window.withProgress(
+        {
+          location: ProgressLocation.Notification,
+          title: InfoMessages.GENERATING_REPHRASE,
+          cancellable: true,
+        },
+        async (progress, token) => {
+          token.onCancellationRequested(() => {
+            window.showInformationMessage(InfoMessages.REPHRASE_CANCELLED);
+          });
+  
+          progress.report({ increment: 30 });
+    
+          await this.processRephrase(openAIService, prompt, document, range, progress, token, false);
+        },
+      );
     } catch (error) {
-      let errorMessage = InfoMessages.AI_SERVICE_ERROR;
-      if (error instanceof Error) {
-        errorMessage = error.message;
+      await this.handleServiceError(error);
+    } finally {
+      this.currentlyProcessing = false;
+    }
+  }
+
+  private async processRephrase(
+    openAIService: any,
+    prompt: string,
+    document: TextDocument,
+    range: Range,
+    progress: Progress<{ message?: string; increment?: number }>,
+    token: CancellationToken,
+    ignoreMaxTokens: boolean
+  ) {
+    try {
+      const rephrasedText = await this.generateRephrasedText(
+        openAIService,
+        prompt,
+        document,
+        range,
+        ignoreMaxTokens
+      );
+
+      if (token.isCancellationRequested) {
+        return;
       }
 
-      window.showErrorMessage(errorMessage);
+      progress.report({ increment: 70 });
+      await this.handleRephraseResult(document, range, rephrasedText);
+    } catch (error) {
+      if (token.isCancellationRequested) {
+        return;
+      }
 
-      this.currentlyProcessing = false;
-
-      return;
-    }
-
-    // Show loading indicator while getting rephrased text
-    await window.withProgress(
-      {
-        location: ProgressLocation.Notification,
-        title: InfoMessages.GENERATING_REPHRASE,
-        cancellable: true,
-      },
-      async (progress, token) => {
-        // Listen for cancellation
-        token.onCancellationRequested(() => {
-          window.showInformationMessage(InfoMessages.REPHRASE_CANCELLED);
-          return;
-        });
-
-        progress.report({ increment: 30 });
-
-        try {
-          const originalText = document.getText(range);
-          const rephrasedText = await openAIService.createChatCompletion(
+      if (error instanceof TokenLimitError && !ignoreMaxTokens) {
+        const shouldRetry = await this.promptForRetryWithoutLimit(error, progress);
+      
+        if (shouldRetry && !token.isCancellationRequested) {
+          await this.processRephrase(
+            openAIService,
             prompt,
-            originalText,
-            document.languageId,
+            document,
+            range,
+            progress,
+            token,
+            true
           );
+        }  
+      } else {
+        await this.handleGeneralError(error);
+      }
+    }
+  }
 
-          if (token.isCancellationRequested) {
-            // Simply return if the task was cancelled
-            this.currentlyProcessing = false;
-            return;
-          }
-
-          progress.report({ increment: 70 });
-
-          const useAcceptRejectFlow = this.config.getUseAcceptRejectFlow();
-          const editor = this.getEditorIfValid(document);
-          if (editor && useAcceptRejectFlow) {
-            editor.selection = new Selection(range.end, range.end);
-
-            const rephrasedRange = await this.insertText(
-              document,
-              range.end,
-              rephrasedText,
-              false,
-            );
-            if (rephrasedRange) {
-              this.applyDecorations(editor, [
-                {
-                  type: 'original',
-                  range,
-                  decorationOptions: {
-                    backgroundColor: 'rgba(255, 182, 193, 0.2)',
-                    border: '1px solid red',
-                    isWholeLine: true,
-                  },
-                },
-                {
-                  type: 'rephrased',
-                  range: rephrasedRange,
-                  decorationOptions: {
-                    backgroundColor: 'rgba(144, 255, 144, 0.2)',
-                    border: '1px solid green',
-                    isWholeLine: true,
-                  },
-                },
-              ]);
-
-              // Trigger codelens refresh to show buttons
-              this.codeLensEventEmitter.fire();
-            }
-          } else {
-            // If no valid editor is found, or if accept/reject flow is disabled
-            // then directly insert the rephrased text
-            await this.insertText(document, range.end, rephrasedText);
-          }
-        } catch (error) {
-          let errorMessage = InfoMessages.REPHRASE_ERROR;
-          if (error instanceof Error) {
-            errorMessage = error.message;
-          }
-
-          window.showErrorMessage(errorMessage);
-
-          await this.cleanupRephrase();
-        }
-
-        this.currentlyProcessing = false;
-      },
+  private async promptForRetryWithoutLimit(
+    error: TokenLimitError,
+    progress: Progress<{ message?: string; increment?: number }>
+  ): Promise<boolean> {
+    const retryChoice = await window.showWarningMessage(
+      error.message,
+      { modal: true },
+      'Retry without limit',
     );
+  
+    if (retryChoice === 'Retry without limit') {
+      progress.report({
+        increment: 10,
+        message: 'Retrying without token limit...',
+      });
+
+      return true;
+    }
+  
+    await this.cleanupRephrase();
+    return false;
+  }
+
+  private async generateRephrasedText(
+    openAIService: any,
+    prompt: string,
+    document: TextDocument,
+    range: Range,
+    ignoreMaxTokens: boolean
+  ): Promise<string> {
+    const originalText = document.getText(range);
+    return await openAIService.createChatCompletion(
+      prompt,
+      originalText,
+      document.languageId,
+      { ignoreMaxTokens }
+    );
+  }
+
+  private async handleRephraseResult(
+    document: TextDocument,
+    range: Range,
+    rephrasedText: string
+  ) {
+    const useAcceptRejectFlow = this.config.getUseAcceptRejectFlow();
+    const editor = this.getEditorIfValid(document);
+  
+    if (editor && useAcceptRejectFlow) {
+      await this.handleAcceptRejectFlow(editor, document, range, rephrasedText);
+    } else {
+      await this.insertText(document, range.end, rephrasedText);
+    }
+  }
+
+  private async handleAcceptRejectFlow(
+    editor: TextEditor,
+    document: TextDocument,
+    originalRange: Range,
+    rephrasedText: string
+  ) {
+    editor.selection = new Selection(originalRange.end, originalRange.end);
+
+    const rephrasedRange = await this.insertText(
+      document,
+      originalRange.end,
+      rephrasedText,
+      false,
+    );
+  
+    if (rephrasedRange) {
+      this.applyDecorations(editor, [
+        this.createDecoration('original', originalRange),
+        this.createDecoration('rephrased', rephrasedRange),
+      ]);
+
+      // Trigger codelens refresh to show buttons
+      this.codeLensEventEmitter.fire();
+    }
+  }
+
+  private createDecoration(
+    type: 'original' | 'rephrased',
+    range: Range,
+  ) {
+    return {
+      type,
+      range,
+      decorationOptions: (type === 'original' ? {
+        backgroundColor: 'rgba(255, 182, 193, 0.2)',
+        border: '1px solid red',
+        isWholeLine: true,
+      } : {
+        backgroundColor: 'rgba(144, 255, 144, 0.2)',
+        border: '1px solid green',
+        isWholeLine: true,
+      }),
+    };
+  }
+
+  private async handleGeneralError(error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : InfoMessages.REPHRASE_ERROR;
+    await window.showErrorMessage(errorMessage);
+    await this.cleanupRephrase();
   }
 
   provideCodeLenses(document: TextDocument): CodeLens[] {

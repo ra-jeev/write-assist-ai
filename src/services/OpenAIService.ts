@@ -6,8 +6,15 @@ const ERROR_MESSAGES = {
   FAILED_TO_PROCESS: 'Failed to process.',
   NO_CHOICES_RETURNED: 'No choices returned by the API.',
   EMPTY_CONTENT: 'Empty content returned by the API.',
-  TOKENS_LIMIT: 'The response was truncated because it reached the token limit. Please increase the "Max Tokens" value in the extension settings.',
+  TOKENS_LIMIT: 'The AI response was cut short because it reached the token limit. You can increase the "Max Tokens" setting or retry without a limit.',
 };
+
+export class TokenLimitError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TokenLimitError';
+  }
+}
 
 export class OpenAIService {
   private readonly openAiSvc: OpenAI;
@@ -65,6 +72,7 @@ export class OpenAIService {
     cmdPrompt: string,
     text: string,
     languageId: string,
+    callOptions: { ignoreMaxTokens?: boolean } = {},
   ): Promise<string> {
     try {
       const errorMsg = this.validateModelSelection();
@@ -86,24 +94,27 @@ export class OpenAIService {
       const userPrompt = `${cmdPrompt}${cmdPrompt.endsWith(':') ? '\n\n' : ':\n\n'}${text}`;
       messages.push({ role: 'user', content: userPrompt });
 
-      const options = {
+      const options: OpenAI.Chat.Completions.ChatCompletionCreateParams = {
         model: this._config.model,
         ...(isNewModel
           ? { max_completion_tokens: this._config.maxTokens }
           : { max_tokens: this._config.maxTokens, temperature: this._config.temperature, }),
+        messages,
         n: 1,
       };
 
-      const response = await this.openAiSvc.chat.completions.create({
-        messages,
-        ...options
-      });
-
+      if (callOptions.ignoreMaxTokens) {
+        delete options.max_tokens;
+        delete options.max_completion_tokens;
+      }
+      
+      const response = await this.openAiSvc.chat.completions.create(options);
+      
       if (response.choices.length) {
         const choice = response.choices[0];
 
         if (choice.finish_reason === 'length') {
-          throw new Error(ERROR_MESSAGES.TOKENS_LIMIT);
+          throw new TokenLimitError(ERROR_MESSAGES.TOKENS_LIMIT);
         }
 
         const finalContent = choice.message.content?.trim();
@@ -116,6 +127,10 @@ export class OpenAIService {
 
       throw new Error(ERROR_MESSAGES.NO_CHOICES_RETURNED);
     } catch (error) {
+      if (error instanceof TokenLimitError) {
+        throw error;
+      }
+
       let errMessage = ERROR_MESSAGES.FAILED_TO_PROCESS;
       if (error instanceof APIError) {
         errMessage = `${error.name}: ${error.type}: ${error.code ? error.code + ': ' + error.message : error.message}`;
