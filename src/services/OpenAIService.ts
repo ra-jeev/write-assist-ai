@@ -6,6 +6,7 @@ const ERROR_MESSAGES = {
   FAILED_TO_PROCESS: 'Failed to process.',
   NO_CHOICES_RETURNED: 'No choices returned by the API.',
   EMPTY_CONTENT: 'Empty content returned by the API.',
+  TOKENS_LIMIT: 'The response was truncated because it reached the token limit. Please increase the "Max Tokens" value in the extension settings.',
 };
 
 export class OpenAIService {
@@ -47,7 +48,7 @@ export class OpenAIService {
   }
 
   private isNewModel(model: string) {
-    return /^(gpt-5|o3|o4)/.test(model);
+    return /^(gpt-4.1|gpt-5|o1|o3|o4)/.test(model);
   }
 
   private validateModelSelection() {
@@ -73,22 +74,21 @@ export class OpenAIService {
 
       const messages: OpenAI.ChatCompletionMessageParam[] = [];
 
+      const isNewModel = this.isNewModel(this._config.model);
       const systemPrompt = this.getSystemPrompt(languageId);
       if (systemPrompt) {
         messages.push({
-          role: 'system',
+          role: isNewModel ? 'developer' : 'system',
           content: systemPrompt,
         });
       }
 
-      const userPrompt = `${cmdPrompt}${
-        cmdPrompt.endsWith(':') ? '\n\n' : ':\n\n'
-      }${text}`;
+      const userPrompt = `${cmdPrompt}${cmdPrompt.endsWith(':') ? '\n\n' : ':\n\n'}${text}`;
       messages.push({ role: 'user', content: userPrompt });
 
       const options = {
         model: this._config.model,
-        ...(this.isNewModel(this._config.model)
+        ...(isNewModel
           ? { max_completion_tokens: this._config.maxTokens }
           : { max_tokens: this._config.maxTokens, temperature: this._config.temperature, }),
         n: 1,
@@ -100,7 +100,13 @@ export class OpenAIService {
       });
 
       if (response.choices.length) {
-        const finalContent = response.choices[0].message.content?.trim();
+        const choice = response.choices[0];
+
+        if (choice.finish_reason === 'length') {
+          throw new Error(ERROR_MESSAGES.TOKENS_LIMIT);
+        }
+
+        const finalContent = choice.message.content?.trim();
         if (!finalContent) {
           throw new Error(ERROR_MESSAGES.EMPTY_CONTENT);
         }
