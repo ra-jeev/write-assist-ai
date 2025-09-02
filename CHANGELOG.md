@@ -6,6 +6,20 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 
 --
 
+## [0.7.1] - 2025-09-02
+
+### Added
+
+-   New setting `writeAssistAi.openAi.reasoningEffort` to control the reasoning effort for newer OpenAI models, allowing users to balance response quality with latency and cost.
+
+### Changed
+
+-   Improved handling of API responses that are truncated due to token limits. The extension now detects this and offers an option to retry the request without a token limit.
+
+### Fixed
+
+-   Fixed an issue where Code Actions would not reappear in the editor's code actions menu after a request was cancelled by the user.
+
 ## [v0.7.0] - 2025-08-08
 
 ### Added
