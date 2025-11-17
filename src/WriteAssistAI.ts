@@ -244,9 +244,9 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     }
   }
 
-  private async handleServiceError(error: unknown) {
+  private handleServiceError(error: unknown) {
     const errorMessage = error instanceof Error ? error.message : InfoMessages.AI_SERVICE_ERROR;
-    await window.showErrorMessage(errorMessage);
+    window.showErrorMessage(errorMessage);
   }
 
   async handleAction(prompt: string, document: TextDocument, range: Range) {
@@ -272,7 +272,7 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
         },
       );
     } catch (error) {
-      await this.handleServiceError(error);
+      this.handleServiceError(error);
     } finally {
       this.currentlyProcessing = false;
     }
@@ -322,7 +322,7 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
           );
         }  
       } else {
-        await this.handleGeneralError(error);
+        this.handleGeneralError(error);
       }
     }
   }
@@ -346,7 +346,7 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
       return true;
     }
   
-    await this.cleanupRephrase();
+    this.cleanupRephrase();
     return false;
   }
 
@@ -428,8 +428,8 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
 
   private async handleGeneralError(error: unknown) {
     const errorMessage = error instanceof Error ? error.message : InfoMessages.REPHRASE_ERROR;
-    await window.showErrorMessage(errorMessage);
-    await this.cleanupRephrase();
+    window.showErrorMessage(errorMessage);
+    this.cleanupRephrase();
   }
 
   provideCodeLenses(document: TextDocument): CodeLens[] {
@@ -514,7 +514,7 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
       window.showErrorMessage(errorMessage);
     }
 
-    await this.cleanupRephrase();
+    this.cleanupRephrase();
   }
 
   async rejectRephrase() {
@@ -540,10 +540,10 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
       window.showErrorMessage(errorMessage);
     }
 
-    await this.cleanupRephrase();
+    this.cleanupRephrase();
   }
 
-  private async cleanupRephrase() {
+  private cleanupRephrase() {
     if (
       !this.activeRephrase ||
       !this.activeRephrase.original ||
