@@ -130,7 +130,7 @@
           ],
           "default": "auto",
           "order": 5,
-          "markdownDescription": "Controls the amount of reasoning the model does before generating a response. Higher values may lead to more thoughtful responses but can increase latency and cost. This setting is primarily for reasoning models like `o1`, `gpt-5` etc."
+          "markdownDescription": "Controls the amount of reasoning the model does before generating a response. Higher values may lead to more thoughtful responses but can increase latency and cost. This setting is primarily for reasoning models like `o1`, `gpt-5` etc.\n\n**Note:** You may get **\"reasoning not supported\"** errors with custom models while using a proxy. Set reasoning effort to `auto` to disable reasoning."
         },
         "writeAssistAi.systemPrompt": {
           "type": "string",
