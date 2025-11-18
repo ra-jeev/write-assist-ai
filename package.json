@@ -94,6 +94,7 @@
         "writeAssistAi.openAi.model": {
           "type": "string",
           "enum": [
+            "gpt-5.1",
             "gpt-5",
             "gpt-5-mini",
             "gpt-5-nano",
@@ -107,7 +108,7 @@
             "o4-mini",
             "custom"
           ],
-          "default": "gpt-5",
+          "default": "gpt-5.1",
           "order": 2,
           "description": "Select the default OpenAI model to use for rewrites."
         },

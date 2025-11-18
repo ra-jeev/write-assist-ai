@@ -1,6 +1,6 @@
 export const DEFAULT_MAX_TOKENS = 4096;
 export const DEFAULT_TEMPERATURE = 0.3;
-export const DEFAULT_MODEL = 'gpt-5';
+export const DEFAULT_MODEL = 'gpt-5.1';
 
 // Keys for the extensions configuration settings
 export enum ConfigurationKeys {
