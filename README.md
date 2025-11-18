@@ -29,9 +29,7 @@ To use the extension you need to provide your own OpenAI (or OpenAI-Compatible p
 
 ## 🛠️ Installation
 
-You can install the *Write Assist AI* extension from the VS Code Marketplace.
-
-[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ra-jeev.write-assist-ai)
+You can install the *Write Assist AI* extension from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ra-jeev.write-assist-ai) or the [Open VSX Registry](https://open-vsx.org/extension/ra-jeev/write-assist-ai).
 
 ## ⚙️ Extension Settings & File-based Configuration
 
