@@ -112,7 +112,7 @@ If no file-based config is present, or for settings that aren't supported with f
 
 In addition, you need to set your `OpenAI API Key` (or the OpenAI-Compatible provider's API Key) in the `Command Palette` under `Write Assist AI` category. If not configured already, you can also set it when you use the extension for the first time. Your key will be securely stored in VSCode's `secretStorage` for safety.
 
-## Using Alternative OpenAI-Compatible Providers
+## 🔀 Using Alternative OpenAI-Compatible Providers
 
 To utilize other OpenAI-compatible providers (such as [`Ollama`](https://ollama.com/blog/openai-compatibility), [`Groq`](https://console.groq.com/docs/openai) etc.), follow these steps:
 
@@ -133,7 +133,7 @@ The API Key for `Ollama` can be any text, say `ollama` itself.
 
 Once you've completed these steps, you'll be ready to use the alternative provider.
 
-## Creating New Actions
+## 🆕 Creating New Actions
 
 You can now define actions either in your workspace config files (explained above) or in VS Code settings. Both `writeAssistAi.quickFixes` and `writeAssistAi.rewriteOptions` use the same **JSON Schema** to define actions. You can edit or remove existing actions, or create a new one by adding an action object.
 
@@ -191,19 +191,35 @@ Some models do not support reasoning capabilities. If you encounter a **"reasoni
 
 ## 🚀 Release Notes
 
+### v0.7.2
+
+#### Added
+
+- Support for `typst (.typ)` files.
+- `gpt-5.1` model to the selection dropdown, and made it the default model.
+
+#### Changed
+
+- README updated for troubleshooting the **"reasoning not supported"** errors with custom models with a proxy.
+
+#### Fixed
+
+- Fixed an issue where the API progress indicator would not auto dismiss on API errors.
+- Fixed an issue where the dynamic API-KEY change would not reflect in the subsequent requests without a reload. 
+
 ### v0.7.1
 
 #### Added
 
--   New setting `writeAssistAi.openAi.reasoningEffort` to control model reasoning for newer models.
+- New setting `writeAssistAi.openAi.reasoningEffort` to control model reasoning for newer models.
 
 #### Changed
 
--   Improved handling of truncated API responses with a new retry mechanism.
+- Improved handling of truncated API responses with a new retry mechanism.
 
 #### Fixed
 
--   Fixed an issue where Code Actions would not reappear after cancelling a request.
+- Fixed an issue where Code Actions would not reappear after cancelling a request.
 
 ### v0.7.0
 

@@ -6,19 +6,35 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 
 --
 
-## [0.7.1] - 2025-09-02
+## [v0.7.2] - 2025-11-18
 
 ### Added
 
--   New setting `writeAssistAi.openAi.reasoningEffort` to control the reasoning effort for newer OpenAI models, allowing users to balance response quality with latency and cost.
+- Support for `typst (.typ)` files.
+- `gpt-5.1` model to the selection dropdown, and made it the default model.
 
 ### Changed
 
--   Improved handling of API responses that are truncated due to token limits. The extension now detects this and offers an option to retry the request without a token limit.
+- README updated for troubleshooting the **"reasoning not supported"** errors with custom models with a proxy.
 
 ### Fixed
 
--   Fixed an issue where Code Actions would not reappear in the editor's code actions menu after a request was cancelled by the user.
+- Fixed an issue where the API progress indicator would not auto dismiss on API errors.
+- Fixed an issue where the dynamic API-KEY change would not reflect in the subsequent requests without a reload. 
+
+## [v0.7.1] - 2025-09-02
+
+### Added
+
+- New setting `writeAssistAi.openAi.reasoningEffort` to control the reasoning effort for newer OpenAI models, allowing users to balance response quality with latency and cost.
+
+### Changed
+
+- Improved handling of API responses that are truncated due to token limits. The extension now detects this and offers an option to retry the request without a token limit.
+
+### Fixed
+
+- Fixed an issue where Code Actions would not reappear in the editor's code actions menu after a request was cancelled by the user.
 
 ## [v0.7.0] - 2025-08-08
 
