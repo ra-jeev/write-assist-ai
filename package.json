@@ -22,14 +22,15 @@
   "keywords": [
     "writing",
     "assistant",
-    "markdown",
     "openai",
-    "latex",
-    "text",
-    "quarto",
     "chatgpt",
-    "rewrite",
-    "mdx"
+    "markdown",
+    "quarto",
+    "latex",
+    "typst",
+    "text",
+    "mdx",
+    "rewrite"
   ],
   "icon": "assets/images/icon.png",
   "galleryBanner": {
@@ -45,7 +46,8 @@
     "onLanguage:latex",
     "onLanguage:tex",
     "onLanguage:bibtex",
-    "onLanguage:quarto"
+    "onLanguage:quarto",
+    "onLanguage:typst"
   ],
   "main": "./dist/extension.js",
   "contributes": {

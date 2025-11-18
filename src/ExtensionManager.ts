@@ -139,6 +139,7 @@ export class ExtensionManager {
       'latex',
       'bibtex',
       'quarto',
+      'typst'
     ];
 
     this.registerCodeActionsProviderAndCmds(
