@@ -142,6 +142,7 @@ export class OpenAIConfigManager {
   }
 
   onApiKeyChanged() {
+    this.apiKey = undefined;
     if (this.changeListener) {
       this.changeListener('reset');
     }
