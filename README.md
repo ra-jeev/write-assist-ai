@@ -8,7 +8,7 @@ This AI text assistant provides a range of writing styles for you to select from
 
 After a successful response from your chosen model, you'll be presented with inline actions to accept or reject the rewritten text. In case you've already changed the active editor, the response will be directly inserted into the original editor, just below the selected text.
 
-![Extension Demo](/assets/images/WriteAssistAiDemo.gif)
+![Extension Demo](/assets/demo/WriteAssistAiDemo.gif)
 
 Current feature list:
 

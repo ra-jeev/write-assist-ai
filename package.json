@@ -32,7 +32,7 @@
     "mdx",
     "rewrite"
   ],
-  "icon": "assets/images/icon.png",
+  "icon": "assets/icon.png",
   "galleryBanner": {
     "theme": "light",
     "color": "#ffc600"
