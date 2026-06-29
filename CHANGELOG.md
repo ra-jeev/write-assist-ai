@@ -6,6 +6,23 @@ All notable changes to the "write-assist-ai" extension will be documented in thi
 
 --
 
+## [v0.7.3] - 2026-06-29
+
+### Added
+
+- New `writeAssistAi.resultMode` setting to control how generated rewrites are applied:
+  - `acceptReject` shows the existing inline Accept/Reject flow.
+  - `insertBelow` inserts the rewrite below the selected text with separators.
+  - `replace` directly replaces the selected text.
+- Success notification when direct replace mode applies a rewrite.
+- New OpenAI model options in the model dropdown: `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, and `gpt-5.4-nano`.
+
+### Changed
+
+- Deprecated `writeAssistAi.useAcceptRejectFlow` in favor of `writeAssistAi.resultMode`.
+- Existing `writeAssistAi.useAcceptRejectFlow` settings are migrated to `writeAssistAi.resultMode` when the extension activates.
+- README updated with `resultMode` usage and the correct default model.
+
 ## [v0.7.2] - 2025-11-18
 
 ### Added

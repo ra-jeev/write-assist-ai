@@ -192,6 +192,19 @@ Some models do not support reasoning capabilities. If you encounter a **"reasoni
 
 ## 🚀 Release Notes
 
+### v0.7.3
+
+#### Added
+
+- New `writeAssistAi.resultMode` setting with `acceptReject`, `insertBelow`, and `replace` modes.
+- Direct replace mode now shows a success notification after applying a rewrite.
+- Added `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, and `gpt-5.4-nano` to the model dropdown.
+
+#### Changed
+
+- Deprecated `writeAssistAi.useAcceptRejectFlow`; existing values are migrated to `writeAssistAi.resultMode`.
+- README updated with `resultMode` usage and the correct default model.
+
 ### v0.7.2
 
 #### Added
