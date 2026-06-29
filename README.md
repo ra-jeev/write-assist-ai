@@ -100,7 +100,7 @@ If no file-based config is present, or for settings that aren't supported with f
 
 * `writeAssistAi.maxTokens`: Maximum number of tokens to use for each OpenAI API call. The default is `4096`.
 * `writeAssistAi.temperature`: Temperature value to use for the API calls. The default is `0.3`.
-* `writeAssistAi.openAi.model`: The OpenAI model to use. The default is `gpt-5`.
+* `writeAssistAi.openAi.model`: The OpenAI model to use. The default is `gpt-5.1`.
 * `writeAssistAi.openAi.customModel`: To use a custom model, select `custom` from the `writeAssistAi.openAi.model` dropdown menu, and enter your model name here.
 * `writeAssistAi.openAi.proxyUrl`: To use a proxy for AI calls or to connect with an OpenAI-compatible AI provider (such as `Ollama`, `Groq` etc.), set this to your preferred value. If you choose a different provider, you will also need to update the API Key and specify the custom model you wish to use.
 * `writeAssistAi.openAi.reasoningEffort`: Controls the amount of reasoning the model does before generating a response. Higher values may lead to more thoughtful responses but can increase latency and cost. This setting is primarily for reasoning models like `gpt-5`, `o1` etc. The default is `auto`. **Note:** You may get **"reasoning not supported"** errors with custom models while using a proxy. Set reasoning effort to `auto` to disable reasoning.
