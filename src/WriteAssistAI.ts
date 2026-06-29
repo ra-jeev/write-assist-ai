@@ -47,6 +47,7 @@ const InfoMessages = {
   REPHRASE_ERROR: 'Error generating rephrased text.',
   REPHRASE_ACCEPT_ERROR: 'Error accepting rephrased text.',
   REPHRASE_REJECT_ERROR: 'Error rejecting rephrased text.',
+  REPHRASE_REPLACE_SUCCESS: 'Selected text replaced successfully.',
   GENERATING_REPHRASE: 'Generating rephrased text...',
   REPHRASE_CANCELLED: 'Rephrase task cancelled!',
 };
@@ -371,11 +372,17 @@ export class WriteAssistAI implements CodeActionProvider, CodeLensProvider {
     range: Range,
     rephrasedText: string
   ) {
-    const useAcceptRejectFlow = this.config.getUseAcceptRejectFlow();
+    const resultMode = this.config.getResultMode();
     const editor = this.getEditorIfValid(document);
-  
-    if (editor && useAcceptRejectFlow) {
+
+    if (editor && resultMode === 'acceptReject') {
       await this.handleAcceptRejectFlow(editor, document, range, rephrasedText);
+    } else if (resultMode === 'replace') {
+      const replaced = await this.replaceText(document, range, rephrasedText);
+
+      if (replaced) {
+        window.showInformationMessage(InfoMessages.REPHRASE_REPLACE_SUCCESS);
+      }
     } else {
       await this.insertText(document, range.end, rephrasedText);
     }

@@ -18,6 +18,8 @@ export type LanguageConfig<T> = {
 };
 
 export type ReasoningEffort = 'auto' | 'minimal' | 'low' | 'medium' | 'high';
+export type ResultMode = 'acceptReject' | 'insertBelow' | 'replace';
+
 export type OpenAIConfig = {
   model: string;
   maxTokens: number;

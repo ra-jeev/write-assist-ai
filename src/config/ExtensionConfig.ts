@@ -1,4 +1,9 @@
-import { ExtensionContext, workspace, ConfigurationChangeEvent } from 'vscode';
+import {
+  ConfigurationChangeEvent,
+  ConfigurationTarget,
+  ExtensionContext,
+  workspace,
+} from 'vscode';
 import { OpenAIConfigManager } from './OpenAIConfigManager';
 import { ActionsConfigManager } from './ActionsConfigManager';
 import { SecretsManager } from './SecretsManager';
@@ -12,6 +17,7 @@ import type {
   LanguageConfig,
   OpenAIConfig,
   OpenAIConfigChangeListener,
+  ResultMode,
 } from '../types';
 
 export class ExtensionConfig {
@@ -20,7 +26,7 @@ export class ExtensionConfig {
   private secretsManager: SecretsManager;
   private fileConfigManager: FileConfigManager;
   private separator = '';
-  private useAcceptRejectFlow = true;
+  private resultMode: ResultMode = 'acceptReject';
 
   constructor(
     private readonly context: ExtensionContext,
@@ -34,8 +40,9 @@ export class ExtensionConfig {
   
   async initialize() {
     await this.fileConfigManager.initialize();
+    await this.migrateDeprecatedResultModeConfig();
     this.registerAllListeners();
-    this.updateUseAcceptRejectFlow();
+    this.updateResultMode();
     this.initSeparator();
   }
 
@@ -46,11 +53,74 @@ export class ExtensionConfig {
     ).default;
   }
 
-  private updateUseAcceptRejectFlow() {
-    this.useAcceptRejectFlow = this.getConfiguration(
+  private updateResultMode() {
+    const workspaceConfig = workspace.getConfiguration(CONFIG_SECTION_KEY);
+    this.resultMode = workspaceConfig.get<ResultMode>(
+      ConfigurationKeys.resultMode,
+      'acceptReject',
+    );
+  }
+
+  private async migrateDeprecatedResultModeConfig() {
+    const workspaceConfig = workspace.getConfiguration(CONFIG_SECTION_KEY);
+    const resultMode = workspaceConfig.inspect<ResultMode>(
+      ConfigurationKeys.resultMode,
+    );
+    const useAcceptRejectFlow = workspaceConfig.inspect<boolean>(
       ConfigurationKeys.useAcceptRejectFlow,
-      true,
-    ).default;
+    );
+
+    await this.migrateDeprecatedResultModeForTarget(
+      workspaceConfig,
+      ConfigurationTarget.Global,
+      resultMode?.globalValue,
+      useAcceptRejectFlow?.globalValue,
+    );
+
+    await this.migrateDeprecatedResultModeForTarget(
+      workspaceConfig,
+      ConfigurationTarget.Workspace,
+      resultMode?.workspaceValue,
+      useAcceptRejectFlow?.workspaceValue,
+    );
+
+    await this.migrateDeprecatedResultModeForTarget(
+      workspaceConfig,
+      ConfigurationTarget.WorkspaceFolder,
+      resultMode?.workspaceFolderValue,
+      useAcceptRejectFlow?.workspaceFolderValue,
+    );
+  }
+
+  private async migrateDeprecatedResultModeForTarget(
+    workspaceConfig: ReturnType<typeof workspace.getConfiguration>,
+    target: ConfigurationTarget,
+    resultMode: ResultMode | undefined,
+    useAcceptRejectFlow: boolean | undefined,
+  ) {
+    if (useAcceptRejectFlow === undefined) {
+      return;
+    }
+
+    if (!resultMode) {
+      await workspaceConfig.update(
+        ConfigurationKeys.resultMode,
+        this.getResultModeFromDeprecatedConfig(useAcceptRejectFlow),
+        target,
+      );
+    }
+
+    await workspaceConfig.update(
+      ConfigurationKeys.useAcceptRejectFlow,
+      undefined,
+      target,
+    );
+  }
+
+  private getResultModeFromDeprecatedConfig(
+    useAcceptRejectFlow: boolean,
+  ): ResultMode {
+    return useAcceptRejectFlow ? 'acceptReject' : 'insertBelow';
   }
 
   getConfiguration<T>(key: string, defaultValue: T): LanguageConfig<T> {
@@ -118,8 +188,8 @@ export class ExtensionConfig {
     return this.separator;
   }
 
-  getUseAcceptRejectFlow(): boolean {
-    return this.useAcceptRejectFlow;
+  getResultMode(): ResultMode {
+    return this.resultMode;
   }
 
   getActions(): ExtensionActions {
@@ -175,8 +245,11 @@ export class ExtensionConfig {
       this.openAIConfig.notifyConfigChanged(event);
     } else if (isConfigChanged(event, ConfigurationKeys.separator)) {
       this.initSeparator();
-    } else if (isConfigChanged(event, ConfigurationKeys.useAcceptRejectFlow)) {
-      this.updateUseAcceptRejectFlow();
+    } else if (
+      isConfigChanged(event, ConfigurationKeys.resultMode) ||
+      isConfigChanged(event, ConfigurationKeys.useAcceptRejectFlow)
+    ) {
+      this.updateResultMode();
     }
   }
 

@@ -147,12 +147,29 @@
           "type": "boolean",
           "default": true,
           "order": 7,
-          "markdownDescription": "If enabled, the original and rewritten text are shown together with options to accept or reject the rewrite.\n\nIf disabled, the rewritten text is inserted automatically into the editor, enclosed within the configured `#writeAssistAi.separatorText#`."
+          "markdownDeprecationMessage": "This setting is deprecated. Use `#writeAssistAi.resultMode#` instead.",
+          "markdownDescription": "Deprecated. Use `#writeAssistAi.resultMode#` instead.\n\nIf enabled, the original and rewritten text are shown together with options to accept or reject the rewrite.\n\nIf disabled, the rewritten text is inserted automatically into the editor, enclosed within the configured `#writeAssistAi.separatorText#`."
+        },
+        "writeAssistAi.resultMode": {
+          "type": "string",
+          "enum": [
+            "acceptReject",
+            "insertBelow",
+            "replace"
+          ],
+          "enumDescriptions": [
+            "Show the rewrite below the original text with inline Accept and Reject actions.",
+            "Insert the rewrite below the selected text, enclosed within the configured separator text.",
+            "Replace the selected text with the rewrite immediately."
+          ],
+          "default": "acceptReject",
+          "order": 8,
+          "markdownDescription": "Controls what happens after a rewrite is generated.\n\n`acceptReject` shows the rewrite below the original text with inline Accept and Reject actions.\n\n`insertBelow` inserts the rewrite below the selected text, enclosed within the configured `#writeAssistAi.separatorText#`.\n\n`replace` replaces the selected text with the rewrite immediately."
         },
         "writeAssistAi.separatorText": {
           "type": "string",
           "default": "********************************",
-          "order": 8,
+          "order": 9,
           "markdownDescription": "The text used to separate the rewritten output in the editor. Leave empty for no separator."
         },
         "writeAssistAi.quickFixes": {
